@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Dentel</string>
+    <string name="slogan">We Make Dentistry Visible</string>
+    <string name="dentel_title">DENTEL</string>
+    <string name="login">تسجيل الدخول</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="password">كلمة السر</string>
+    <string name="forget_password">نسيت كلمة السر؟</string>
+    <string name="join">دخول</string>
+    <string name="login_with">تسجيل الدخول بواسطة</string>
+    <string name="have_no_account">لا تملك حسابا؟</string>
+    <string name="create_new_account">أنشئ حسابا جديدا</string>
+    <string name="sign_up">إنشاء حساب</string>
+    <string name="confirm_password">تأكيد كلمة السر</string>
+    <string name="username">اسم المستخدم</string>
+    <string name="register">تسجيل</string>
+    <string name="have_account">لديك حساب؟</string>
+    <string name="email_verification">تأكيد البريد الالكتروني</string>
+    <string name="email_verification_note">اضغط على الرابط المرسل\n لتأكيــد البريــد الالكتــــــرونــي</string>
+    <string name="email_verification_note_2">بعد الضغط على الرابط انتظر قليلا ثم اضغط زر التأكيد</string>
+    <string name="link_not_sent">لم يصلك الرابط؟</string>
+    <string name="resent">إعادة الإرسال</string>
+    <string name="confirm">تأكيد</string>
+    <string name="password_reset">تغيير كلمة السر</string>
+    <string name="password_reset_note">ادخل البريد الإلكتروني \nوسيتم ارسال رابط لتغيير كلمة السر</string>
+</resources>

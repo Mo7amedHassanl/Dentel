@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "88182368660",
+    "project_id": "dentel-android",
+    "storage_bucket": "dentel-android.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:88182368660:android:a76a8224d3ab5048134781",
+        "android_client_info": {
+          "package_name": "com.m7md7sn.dentel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "88182368660-vksojkpijgba78j6p231iucq1fh72m10.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.m7md7sn.dentel",
+            "certificate_hash": "3d221d99612a1b36c6b5d86337abfcbd812885ef"
+          }
+        },
+        {
+          "client_id": "88182368660-5g7p43ab4ojqsvlvdgb9pp3j3so517c3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJ4vip42xy3OVOnF29lPnrnVa6iePNo2E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "88182368660-5g7p43ab4ojqsvlvdgb9pp3j3so517c3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
