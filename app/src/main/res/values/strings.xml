@@ -23,4 +23,8 @@
     <string name="confirm">Confirm</string>
     <string name="password_reset">تغيير كلمة السر</string>
     <string name="password_reset_note">ادخل البريد الإلكتروني \nوسيتم ارسال رابط لتغيير كلمة السر</string>
+    <string name="welcome">أهلا بك يا</string>
+    <string name="you_are_about_to_end">..انت على وشك الإنتهاء</string>
+    <string name="upload_your_profile_picture">.فقط يرجي رفع صورة شخصية لك لإتمام كل شئ</string>
+    <string name="skip">تخطي</string>
 </resources>
