@@ -29,4 +29,10 @@
     <string name="skip">Skip</string>
     <string name="home_header_description">"A diverse series\n of explanatory\n videos\n for dental\n procedures"</string>
     <string name="choose_part">Choose the section you want</string>
+    <string name="regular_filling">Regular\nFilling</string>
+    <string name="mobile_denture">Removable\nDentures</string>
+    <string name="nerve_filling">Root\nCanal</string>
+    <string name="fixed_denture">Fixed\nDentures</string>
+    <string name="bedo">Pediatric\nDentistry</string>
+    <string name="diagnosis">Diagnosis\nand Diseases</string>
 </resources>

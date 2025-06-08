@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,12 +59,8 @@ fun PictureUploadScreen(
     onNavigateToHome: () -> Unit,
     viewModel: PictureUploadViewModel = hiltViewModel()
 ) {
-    val selectedImageUri by viewModel.selectedImageUri.collectAsState()
-    val isUploading by viewModel.isUploading.collectAsState()
-    val uploadSuccess by viewModel.uploadSuccess.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val userName by viewModel.userName.collectAsState()
-    val uploadProgress by viewModel.uploadProgress.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     val pickImageLauncher = rememberLauncherForActivityResult(
@@ -70,16 +69,17 @@ fun PictureUploadScreen(
         viewModel.setSelectedImageUri(uri)
     }
 
-    LaunchedEffect(uploadSuccess) {
-        if (uploadSuccess) {
-            Toast.makeText(context, "Profile picture uploaded successfully!", Toast.LENGTH_SHORT).show()
-            onNavigateToHome()
+    LaunchedEffect(Unit) {
+        viewModel.snackbarMessage.collect { event ->
+            event.getContentIfNotHandled()?.let { message ->
+                snackbarHostState.showSnackbar(message)
+            }
         }
     }
 
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+    LaunchedEffect(uiState.uploadSuccess) {
+        if (uiState.uploadSuccess) {
+            onNavigateToHome()
         }
     }
 
@@ -97,14 +97,17 @@ fun PictureUploadScreen(
             )
             PictureUploadScreenContent(
                 modifier = Modifier.weight(0.7f),
-                selectedImageUri = selectedImageUri,
+                selectedImageUri = uiState.selectedImageUri,
                 onAddButtonClick = { pickImageLauncher.launch("image/*") },
                 onConfirmClick = { viewModel.uploadProfilePicture() },
                 onSkipClick = onNavigateToHome,
-                isUploading = isUploading,
-                userName = userName,
-                uploadProgress = uploadProgress
+                isUploading = uiState.isUploading,
+                userName = uiState.userName,
+                uploadProgress = uiState.uploadProgress
             )
+        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
         }
     }
 }
@@ -198,28 +201,29 @@ fun PictureUploadScreenContent(
                         )
                     )
                 }
+                Spacer(Modifier.height(46.dp))
             } else {
-            CommonLargeButton(
-                text = stringResource(R.string.confirm),
+                CommonLargeButton(
+                    text = stringResource(R.string.confirm),
                     onClick = onConfirmClick,
-            )
-            }
-            Spacer(Modifier.height(8.dp))
-            TextButton(
-                onClick = onSkipClick,
-            ) {
-                Text(
-                    text = stringResource(R.string.skip),
-                    style = TextStyle(
-                        fontSize = 16.sp,
-                        lineHeight = 20.sp,
-                        fontFamily = FontFamily(Font(R.font.din_next_lt_regular)),
-                        fontWeight = FontWeight(400),
-                        color = Color(0xFF421882),
-                        textAlign = TextAlign.Center,
-                        letterSpacing = 0.33.sp,
-                    )
+                    isLoading = isUploading
                 )
+                Spacer(Modifier.height(20.dp))
+                TextButton(
+                    onClick = onSkipClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.skip),
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
+                            fontWeight = FontWeight(500),
+                            color = Color(0xFF421882),
+                            textAlign = TextAlign.Center,
+                        )
+                    )
+                }
             }
         }
     }
@@ -227,51 +231,32 @@ fun PictureUploadScreenContent(
 
 @Composable
 fun ProfilePictureWithAddButton(
+    modifier: Modifier = Modifier,
     imageUri: Uri?,
     @DrawableRes imageRes: Int,
-    onAddButtonClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onAddButtonClick: () -> Unit
 ) {
-    Box(
-        modifier = modifier
-    ) {
-        val painter = if (imageUri != null) {
-            rememberAsyncImagePainter(imageUri)
-        } else {
-            painterResource(imageRes)
-        }
+    Box(modifier = modifier.size(160.dp)) {
         Image(
-            painter = painter,
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(160.dp),
+            painter = if (imageUri != null) rememberAsyncImagePainter(imageUri) else painterResource(id = imageRes),
+            contentDescription = "Profile Picture",
+            modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
         IconButton(
             onClick = onAddButtonClick,
             modifier = Modifier
-                .align(Alignment.BottomEnd) .size(64.dp),
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
         ) {
-            Image(
-                painter = painterResource(R.drawable.ic_add),
-                contentDescription = null,
-            )
+            Image(painter = painterResource(id = R.drawable.ic_add), contentDescription = "Add Image")
         }
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-private fun PictureUploadScreenPreviewEn() {
-    DentelTheme {
-        PictureUploadScreen(onNavigateToHome = {})
-    }
-}
-
-@Preview(locale = "ar")
-@Composable
-private fun PictureUploadScreenPreviewAr() {
+fun PreviewPictureUploadScreen() {
     DentelTheme {
         PictureUploadScreen(onNavigateToHome = {})
     }

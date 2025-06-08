@@ -1,35 +1,43 @@
 package com.m7md7sn.dentel.presentation.ui.home
 
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -42,16 +50,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.m7md7sn.dentel.R
-import com.m7md7sn.dentel.presentation.common.components.FullDentelHeader
+import com.m7md7sn.dentel.data.model.Section
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
-import com.m7md7sn.dentel.presentation.ui.auth.login.LoginScreenContent
-import com.m7md7sn.dentel.utils.Result
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(modifier: Modifier = Modifier, viewModel: HomeViewModel = hiltViewModel()) {
     val scrollState = rememberScrollState()
+    val uiState by viewModel.uiState.collectAsState()
     Surface(
         modifier = modifier.fillMaxSize(),
         color = DentelDarkPurple
@@ -69,25 +77,101 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             HomeHeader(
                 modifier = Modifier.fillMaxWidth()
             )
-            PartsTitleWithLogo()
-            PartsGrid()
+            SectionTitleWithLogo()
+            SectionsGrid(
+                uiState.sections
+            )
         }
     }
 }
 
 @Composable
-fun PartsGrid(
-    modifier: Modifier = Modifier,
+fun SectionsGrid(
+    sections: List<Section>,
+    modifier: Modifier = Modifier
 ) {
-//    LazyHorizontalGrid(
-//        rows = GridCells.Fixed(2),
-//    ) {
-//
-//    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(350.dp)
+            .padding(horizontal = 34.dp)
+    ) {
+        LazyHorizontalGrid(
+            rows = GridCells.Fixed(2),
+            contentPadding = PaddingValues(12.dp)
+        ) {
+            items(sections) {
+                SectionGridItem(
+                    imageRes = it.imageRes,
+                    titleRes = it.titleRes,
+                    color = it.color,
+                    onCardClicked = { /* TODO: Handle card click */ }
+                )
+            }
+        }
+    }
 }
 
 @Composable
-fun PartsTitleWithLogo(
+fun SectionGridItem(
+    @DrawableRes imageRes: Int,
+    @StringRes titleRes: Int,
+    color: Color,
+    onCardClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .padding(end = 24.dp, bottom = 24.dp)
+            .size(142.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = color
+        ),
+        shape = RoundedCornerShape(24.dp),
+        onClick = onCardClicked
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.section_card_bg),
+                contentDescription = null,
+                modifier = Modifier
+                    .alpha(0.1f)
+                    .align(Alignment.BottomCenter)
+            )
+            Box(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxSize()
+            ) {
+                Image(
+                    painter = painterResource(imageRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(55.dp)
+                        .align(Alignment.TopEnd )
+                )
+                Text(
+                    text = stringResource(titleRes),
+                    style = TextStyle(
+                        fontSize = 20.sp,
+                        lineHeight = 28.sp,
+                        fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
+                        fontWeight = FontWeight(700),
+                        color = Color(0xFF421882),
+                        letterSpacing = 0.63.sp,
+                    ),
+                    modifier = Modifier.align(Alignment.BottomStart)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SectionTitleWithLogo(
     modifier: Modifier = Modifier
 ) {
     Box(

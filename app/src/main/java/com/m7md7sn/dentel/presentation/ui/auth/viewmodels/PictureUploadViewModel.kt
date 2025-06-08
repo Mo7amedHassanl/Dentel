@@ -11,10 +11,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.m7md7sn.dentel.presentation.ui.auth.pictureupload.PictureUploadUiState
+import com.m7md7sn.dentel.utils.Event
 
 @HiltViewModel
 class PictureUploadViewModel @Inject constructor(
@@ -22,59 +28,40 @@ class PictureUploadViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _selectedImageUri = MutableStateFlow<Uri?>(null)
-    val selectedImageUri: StateFlow<Uri?> = _selectedImageUri
+    private val _uiState = MutableStateFlow(PictureUploadUiState(userName = auth.currentUser?.displayName))
+    val uiState: StateFlow<PictureUploadUiState> = _uiState.asStateFlow()
 
-    private val _isUploading = MutableStateFlow(false)
-    val isUploading: StateFlow<Boolean> = _isUploading
-
-    private val _uploadSuccess = MutableStateFlow(false)
-    val uploadSuccess: StateFlow<Boolean> = _uploadSuccess
-
-    private val _uploadProgress = MutableStateFlow(0)
-    val uploadProgress: StateFlow<Int> = _uploadProgress
-
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
-
-    private val _userName = MutableStateFlow<String?>(null)
-    val userName: StateFlow<String?> = _userName
-
-    init {
-        auth.currentUser?.displayName?.let {
-            _userName.value = it
-        }
-    }
+    private val _snackbarMessage = MutableSharedFlow<Event<String>>()
+    val snackbarMessage: SharedFlow<Event<String>> = _snackbarMessage.asSharedFlow()
 
     fun setSelectedImageUri(uri: Uri?) {
-        _selectedImageUri.value = uri
+        _uiState.value = _uiState.value.copy(selectedImageUri = uri)
     }
 
     fun uploadProfilePicture() {
-        _selectedImageUri.value?.let { uri ->
-            _isUploading.value = true
-            _errorMessage.value = null
+        _uiState.value.selectedImageUri?.let { uri ->
+            _uiState.value = _uiState.value.copy(isUploading = true, errorMessage = null, uploadProgress = 0)
             viewModelScope.launch {
                 try {
                     val userId = auth.currentUser?.uid
                     if (userId == null) {
-                        _errorMessage.value = "User not logged in."
-                        _isUploading.value = false
+                        _snackbarMessage.emit(Event("User not logged in."))
+                        _uiState.value = _uiState.value.copy(isUploading = false)
                         return@launch
                     }
 
                     MediaManager.get().upload(uri)
-                        .option("folder", "profile_pictures") // Optional: specify a folder
-                        .option("public_id", userId) // Optional: use user ID as public ID
-                        .unsigned("dentel_profile_pictures") // Use your unsigned upload preset name
+                        .option("folder", "profile_pictures")
+                        .option("public_id", userId)
+                        .unsigned("dentel_profile_pictures")
                         .callback(object : UploadCallback {
                             override fun onStart(requestId: String) {
-                                // Upload started
+                                // Nothing specific to update in UI state on start that isn't already handled
                             }
 
                             override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {
                                 val progress = ((bytes * 100) / totalBytes).toInt()
-                                _uploadProgress.value = progress
+                                _uiState.value = _uiState.value.copy(uploadProgress = progress)
                             }
 
                             override fun onSuccess(requestId: String, resultData: Map<*, *>?) {
@@ -87,37 +74,37 @@ class PictureUploadViewModel @Inject constructor(
                                     auth.currentUser?.updateProfile(profileUpdates)
                                         ?.addOnCompleteListener { task ->
                                             if (task.isSuccessful) {
-                                                _uploadSuccess.value = true
-                                                _isUploading.value = false
+                                                _uiState.value = _uiState.value.copy(uploadSuccess = true, isUploading = false)
+                                                viewModelScope.launch { _snackbarMessage.emit(Event("Profile picture uploaded successfully!")) }
                                             } else {
-                                                _errorMessage.value = task.exception?.localizedMessage
-                                                _isUploading.value = false
+                                                viewModelScope.launch { _snackbarMessage.emit(Event(task.exception?.localizedMessage ?: "Failed to update profile.")) }
+                                                _uiState.value = _uiState.value.copy(isUploading = false)
                                             }
                                         }
                                 } else {
-                                    _errorMessage.value = "Failed to get image URL from Cloudinary."
-                                    _isUploading.value = false
+                                    viewModelScope.launch { _snackbarMessage.emit(Event("Failed to get image URL from Cloudinary.")) }
+                                    _uiState.value = _uiState.value.copy(isUploading = false)
                                 }
                             }
 
                             override fun onError(requestId: String, error: ErrorInfo?) {
-                                _errorMessage.value = error?.description ?: "Cloudinary upload failed."
-                                _isUploading.value = false
+                                viewModelScope.launch { _snackbarMessage.emit(Event(error?.description ?: "Cloudinary upload failed.")) }
+                                _uiState.value = _uiState.value.copy(isUploading = false)
                             }
 
                             override fun onReschedule(requestId: String, error: ErrorInfo?) {
-                                // Upload rescheduled
+                                // Upload rescheduled, no direct UI state update for this in current scope
                             }
                         })
                         .dispatch()
 
                 } catch (e: Exception) {
-                    _errorMessage.value = e.localizedMessage
-                    _isUploading.value = false
+                    viewModelScope.launch { _snackbarMessage.emit(Event(e.localizedMessage ?: "An unexpected error occurred.")) }
+                    _uiState.value = _uiState.value.copy(isUploading = false)
                 }
             }
         } ?: run {
-            _errorMessage.value = "No image selected."
+            viewModelScope.launch { _snackbarMessage.emit(Event("No image selected.")) }
         }
     }
 }

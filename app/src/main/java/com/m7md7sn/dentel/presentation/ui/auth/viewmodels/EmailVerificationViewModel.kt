@@ -1,61 +1,67 @@
-package com.m7md7sn.dentel.presentation.ui.auth.viewmodels
+package com.m7md7sn.dentel.presentation.ui.auth.emailverification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseUser
 import com.m7md7sn.dentel.data.repository.AuthRepository
+import com.m7md7sn.dentel.utils.Event
 import com.m7md7sn.dentel.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.m7md7sn.dentel.presentation.ui.auth.emailverification.EmailVerificationUiState
 
 @HiltViewModel
 class EmailVerificationViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _sendVerificationResult = MutableStateFlow<Result<Unit>?>(null)
-    val sendVerificationResult: StateFlow<Result<Unit>?> = _sendVerificationResult.asStateFlow()
+    private val _uiState = MutableStateFlow(EmailVerificationUiState(userEmail = authRepository.currentUser?.email ?: ""))
+    val uiState: StateFlow<EmailVerificationUiState> = _uiState.asStateFlow()
 
-    private val _reloadUserResult = MutableStateFlow<Result<Unit>?>(null)
-    val reloadUserResult: StateFlow<Result<Unit>?> = _reloadUserResult.asStateFlow()
-
-    val currentUser: FirebaseUser? = authRepository.currentUser
-
-    init {
-        sendEmailVerification()
-    }
+    private val _snackbarMessage = MutableSharedFlow<Event<String>>()
+    val snackbarMessage: SharedFlow<Event<String>> = _snackbarMessage.asSharedFlow()
 
     fun sendEmailVerification() {
-        _sendVerificationResult.value = Result.Loading
+        _uiState.value = _uiState.value.copy(isLoading = true, verificationResult = Result.Loading)
         viewModelScope.launch {
             val result = authRepository.sendEmailVerification()
-            _sendVerificationResult.value = result
+            _uiState.value = _uiState.value.copy(isLoading = false, verificationResult = result)
+
+            if (result is Result.Success) {
+                _snackbarMessage.emit(Event("Verification email sent!"))
+                _uiState.value = _uiState.value.copy(isEmailSent = true)
+            } else if (result is Result.Error) {
+                _snackbarMessage.emit(Event(result.message))
+            }
         }
     }
 
-    fun reloadUser() {
-        _reloadUserResult.value = Result.Loading
+    fun checkEmailVerificationStatus() {
+        _uiState.value = _uiState.value.copy(isLoading = true, verificationResult = Result.Loading)
         viewModelScope.launch {
-            val result = authRepository.reloadUser()
-            _reloadUserResult.value = result
+            val reloadResult = authRepository.reloadUser()
+            if (reloadResult is Result.Success) {
+                if (authRepository.currentUser?.isEmailVerified == true) {
+                    _snackbarMessage.emit(Event("Email verified successfully!"))
+                    _uiState.value = _uiState.value.copy(isLoading = false, verificationResult = Result.Success(Unit))
+                } else {
+                    _snackbarMessage.emit(Event("Email not yet verified. Please check your inbox."))
+                    _uiState.value = _uiState.value.copy(isLoading = false, verificationResult = null)
+                }
+            } else if (reloadResult is Result.Error) {
+                _snackbarMessage.emit(Event(reloadResult.message))
+                _uiState.value = _uiState.value.copy(isLoading = false, verificationResult = reloadResult)
+            }
         }
     }
 
-    fun resetSendVerificationResult() {
-        _sendVerificationResult.value = null
-    }
-
-    fun resetReloadUserResult() {
-        _reloadUserResult.value = null
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            authRepository.logout()
-        }
+    fun resetVerificationResult() {
+        _uiState.value = _uiState.value.copy(verificationResult = null)
     }
 } 

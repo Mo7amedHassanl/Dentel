@@ -66,6 +66,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.flow.collect
+import com.m7md7sn.dentel.utils.Event
 
 @Composable
 fun LoginScreen(
@@ -75,22 +77,27 @@ fun LoginScreen(
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
-    val loginResult by viewModel.loginResult.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(loginResult) {
-        when (loginResult) {
+    LaunchedEffect(Unit) {
+        viewModel.snackbarMessage.collect { event ->
+            event.getContentIfNotHandled()?.let { message ->
+                scope.launch {
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.loginResult) {
+        when (uiState.loginResult) {
             is Result.Success -> {
-                onLoginSuccess((loginResult as Result.Success).data)
+                onLoginSuccess((uiState.loginResult as Result.Success).data)
                 viewModel.resetLoginResult()
             }
             is Result.Error -> {
-                // Display error in Snackbar only if email/password validation passes
-                if (viewModel.emailError == null && viewModel.passwordError == null) {
-                    val errorMessage = (loginResult as Result.Error).message
-                    scope.launch { snackbarHostState.showSnackbar(errorMessage) }
-                }
                 viewModel.resetLoginResult()
             }
             else -> {}
@@ -112,19 +119,19 @@ fun LoginScreen(
                 )
                 LoginScreenContent(
                     modifier = Modifier.weight(0.7f),
-                    email = viewModel.email,
+                    email = uiState.email,
                     onEmailValueChange = viewModel::onEmailChange,
-                    password = viewModel.password,
+                    password = uiState.password,
                     onPasswordValueChange = viewModel::onPasswordChange,
                     onLoginClick = viewModel::login,
                     onForgetPasswordClick = onNavigateToPasswordReset,
                     onCreateAccountClick = onNavigateToSignup,
-                    isLoading = loginResult is Result.Loading,
-                    isEmailError = viewModel.emailError != null,
-                    emailErrorMessage = viewModel.emailError,
-                    isPasswordError = viewModel.passwordError != null,
-                    passwordErrorMessage = viewModel.passwordError,
-                    isPasswordVisible = viewModel.isPasswordVisible,
+                    isLoading = uiState.isLoading,
+                    isEmailError = uiState.emailError != null,
+                    emailErrorMessage = uiState.emailError,
+                    isPasswordError = uiState.passwordError != null,
+                    passwordErrorMessage = uiState.passwordError,
+                    isPasswordVisible = uiState.isPasswordVisible,
                     onTogglePasswordVisibility = viewModel::togglePasswordVisibility
                 )
             }

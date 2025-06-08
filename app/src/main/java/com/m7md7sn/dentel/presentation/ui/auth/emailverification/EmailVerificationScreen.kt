@@ -43,9 +43,13 @@ import com.m7md7sn.dentel.presentation.common.components.FullDentelHeader
 import com.m7md7sn.dentel.presentation.navigation.AuthScreen
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
-import com.m7md7sn.dentel.presentation.ui.auth.viewmodels.EmailVerificationViewModel
 import com.m7md7sn.dentel.utils.Result
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import com.m7md7sn.dentel.utils.Event
+import kotlinx.coroutines.flow.collect
 
 @Composable
 fun EmailVerificationScreen(
@@ -54,42 +58,31 @@ fun EmailVerificationScreen(
     modifier: Modifier = Modifier,
     viewModel: EmailVerificationViewModel = hiltViewModel()
 ) {
-    val sendVerificationResult by viewModel.sendVerificationResult.collectAsState()
-    val reloadUserResult by viewModel.reloadUserResult.collectAsState()
+    val uiState by viewModel.uiState.collectAsState(initial = EmailVerificationUiState())
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(sendVerificationResult) {
-        when (sendVerificationResult) {
-            is Result.Success -> {
-                scope.launch { snackbarHostState.showSnackbar("Verification email sent!") }
-                viewModel.resetSendVerificationResult()
+    LaunchedEffect(Unit) {
+        viewModel.snackbarMessage.collect { event: Event<String> ->
+            event.getContentIfNotHandled()?.let { message ->
+                scope.launch {
+                    snackbarHostState.showSnackbar(message)
+                }
             }
-            is Result.Error -> {
-                val errorMessage = (sendVerificationResult as Result.Error).message
-                scope.launch { snackbarHostState.showSnackbar(errorMessage) }
-                viewModel.resetSendVerificationResult()
-            }
-            else -> {}
         }
     }
 
-    LaunchedEffect(reloadUserResult) {
-        when (reloadUserResult) {
-            is Result.Success -> {
-                if (viewModel.currentUser?.isEmailVerified == true) {
-                    onEmailVerified()
-                } else {
-                    scope.launch { snackbarHostState.showSnackbar("Email not yet verified. Please check your inbox.") }
-                }
-                viewModel.resetReloadUserResult()
-            }
-            is Result.Error -> {
-                val errorMessage = (reloadUserResult as Result.Error).message
-                scope.launch { snackbarHostState.showSnackbar(errorMessage) }
-                viewModel.resetReloadUserResult()
-            }
-            else -> {}
+    LaunchedEffect(uiState.verificationResult) {
+        if (uiState.verificationResult is Result.Success && uiState.isEmailSent) {
+            // This block handles initial email sent success. For actual verification check,
+            // the ViewModel's `checkEmailVerificationStatus` will handle it.
+            // We'll navigate only when `checkEmailVerificationStatus` confirms verification.
+        } else if (uiState.verificationResult is Result.Success<*>) {
+            // This indicates a successful verification check, now navigate
+            onEmailVerified()
+            viewModel.resetVerificationResult()
+        } else if (uiState.verificationResult is Result.Error) {
+            viewModel.resetVerificationResult()
         }
     }
 
@@ -108,12 +101,11 @@ fun EmailVerificationScreen(
                 )
                 EmailVerificationScreenContent(
                     modifier = Modifier.weight(0.7f),
-                    userEmail = viewModel.currentUser?.email ?: "",
+                    userEmail = uiState.userEmail,
                     onResendClick = viewModel::sendEmailVerification,
-                    onConfirmClick = viewModel::reloadUser,
+                    onConfirmClick = viewModel::checkEmailVerificationStatus,
                     onLoginClick = onNavigateToLogin,
-                    isLoadingSendVerification = sendVerificationResult is Result.Loading,
-                    isLoadingConfirm = reloadUserResult is Result.Loading
+                    isLoading = uiState.isLoading
                 )
             }
             SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
@@ -128,8 +120,7 @@ fun EmailVerificationScreenContent(
     onResendClick: () -> Unit,
     onConfirmClick: () -> Unit,
     onLoginClick: () -> Unit,
-    isLoadingSendVerification: Boolean,
-    isLoadingConfirm: Boolean
+    isLoading: Boolean
 ) {
     Surface(
         color = White,
@@ -211,7 +202,7 @@ fun EmailVerificationScreenContent(
             CommonLargeButton(
                 text = stringResource(R.string.confirm),
                 onClick = onConfirmClick,
-                isLoading = isLoadingConfirm
+                isLoading = isLoading
             )
             Spacer(Modifier.height(80.dp))
             Text(

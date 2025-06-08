@@ -29,4 +29,10 @@
     <string name="skip">تخطي</string>
     <string name="home_header_description">"سلســلة متنوعـة\nمن الفيديوهــات\nالتوضيــحــيــــــــــــــــــة\nلإجـــــــــــــــــــــــــــراءات \nطـــــب الأسنـــــــان "</string>
     <string name="choose_part">اختر القسم الذي تريد</string>
+    <string name="regular_filling">الحشو\nالعــادي</string>
+    <string name="mobile_denture">التركيبات\nالمتحركــة</string>
+    <string name="nerve_filling">حشو\nالعصب</string>
+    <string name="fixed_denture">التركيبات\nالثابتـــــة</string>
+    <string name="bedo">طب أسنان\nالأطفـــال</string>
+    <string name="diagnosis">التشخيص\nوالأمـراض</string>
 </resources>

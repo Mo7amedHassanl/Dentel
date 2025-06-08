@@ -49,6 +49,8 @@ import com.m7md7sn.dentel.presentation.ui.auth.viewmodels.PasswordResetViewModel
 import com.m7md7sn.dentel.utils.Result
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
+import com.m7md7sn.dentel.utils.Event
 
 @Composable
 fun PasswordResetScreen(
@@ -57,23 +59,26 @@ fun PasswordResetScreen(
     modifier: Modifier = Modifier,
     viewModel: PasswordResetViewModel = hiltViewModel()
 ) {
-    val passwordResetResult by viewModel.passwordResetResult.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(passwordResetResult) {
-        when (passwordResetResult) {
-            is Result.Success -> {
-                snackbarHostState.showSnackbar("Password reset email sent!")
-                onPasswordResetSent()
-                viewModel.resetPasswordResetResult()
+    LaunchedEffect(Unit) {
+        viewModel.snackbarMessage.collect { event ->
+            event.getContentIfNotHandled()?.let { message ->
+                scope.launch {
+                    snackbarHostState.showSnackbar(message)
+                    if (message == "Password reset email sent!") {
+                        onPasswordResetSent()
+                    }
+                }
             }
-            is Result.Error -> {
-                val errorMessage = (passwordResetResult as Result.Error).message
-                snackbarHostState.showSnackbar(errorMessage)
-                viewModel.resetPasswordResetResult()
-            }
-            else -> {}
+        }
+    }
+
+    LaunchedEffect(uiState.passwordResetResult) {
+        if (uiState.passwordResetResult != null) {
+            viewModel.resetPasswordResetResult()
         }
     }
 
@@ -92,13 +97,13 @@ fun PasswordResetScreen(
                 )
                 PasswordResetScreenContent(
                     modifier = Modifier.weight(0.65f),
-                    email = viewModel.email,
+                    email = uiState.email,
                     onEmailValueChange = viewModel::onEmailChange,
                     onSendPasswordResetClick = viewModel::sendPasswordResetEmail,
                     onLoginClick = onNavigateToLogin,
-                    isLoading = passwordResetResult is Result.Loading,
-                    isEmailError = viewModel.emailError != null,
-                    emailErrorMessage = viewModel.emailError
+                    isLoading = uiState.isLoading,
+                    isEmailError = uiState.emailError != null,
+                    emailErrorMessage = uiState.emailError
                 )
             }
             SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
