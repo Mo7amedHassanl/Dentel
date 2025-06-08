@@ -112,7 +112,22 @@ class SignupViewModel @Inject constructor(
         _signupResult.value = Result.Loading
         viewModelScope.launch {
             val result = authRepository.signup(email, password)
-            _signupResult.value = result
+            if (result is Result.Success) {
+                // Update user profile with display name
+                val updateProfileResult = authRepository.updateUserProfile(username)
+                if (updateProfileResult is Result.Success) {
+                    _signupResult.value = result // Keep the original signup success result
+                } else if (updateProfileResult is Result.Error) {
+                    _signupResult.value = Result.Error(
+                        updateProfileResult.message + " but signup was successful.",
+                        updateProfileResult.throwable
+                    )
+                } else {
+                    _signupResult.value = result // Fallback if updateProfileResult is Loading
+                }
+            } else {
+                _signupResult.value = result
+            }
         }
     }
 

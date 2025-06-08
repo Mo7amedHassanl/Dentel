@@ -1,9 +1,6 @@
 package com.m7md7sn.dentel.di
 
 import android.content.Context
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.m7md7sn.dentel.data.repository.AuthRepository
 import com.m7md7sn.dentel.data.repository.AuthRepositoryImpl
 import dagger.Module
@@ -16,10 +13,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
-    @Provides
-    @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth = Firebase.auth
 
     @Provides
     @Singleton

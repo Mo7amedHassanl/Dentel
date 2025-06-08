@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -57,7 +58,8 @@ fun CommonTextField(
                 Image(
                     painter = it,
                     contentDescription = null,
-                    modifier = if (onTrailingIconClick != null) Modifier.clickable(onClick = onTrailingIconClick) else Modifier
+                    modifier = if (onTrailingIconClick != null) Modifier.clickable(onClick = onTrailingIconClick) else Modifier,
+                    colorFilter = ColorFilter.tint(DentelDarkPurple),
                 )
             }
         },

@@ -1,5 +1,9 @@
 package com.m7md7sn.dentel.presentation.ui.auth.pictureupload
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -12,16 +16,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -32,14 +41,48 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.m7md7sn.dentel.R
 import com.m7md7sn.dentel.presentation.common.components.CommonLargeButton
 import com.m7md7sn.dentel.presentation.common.components.FullDentelHeader
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
+import com.m7md7sn.dentel.presentation.ui.auth.viewmodels.PictureUploadViewModel
 
 @Composable
-fun PictureUploadScreen(modifier: Modifier = Modifier) {
+fun PictureUploadScreen(
+    modifier: Modifier = Modifier,
+    onNavigateToHome: () -> Unit,
+    viewModel: PictureUploadViewModel = hiltViewModel()
+) {
+    val selectedImageUri by viewModel.selectedImageUri.collectAsState()
+    val isUploading by viewModel.isUploading.collectAsState()
+    val uploadSuccess by viewModel.uploadSuccess.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val userName by viewModel.userName.collectAsState()
+    val uploadProgress by viewModel.uploadProgress.collectAsState()
+    val context = LocalContext.current
+
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        viewModel.setSelectedImageUri(uri)
+    }
+
+    LaunchedEffect(uploadSuccess) {
+        if (uploadSuccess) {
+            Toast.makeText(context, "Profile picture uploaded successfully!", Toast.LENGTH_SHORT).show()
+            onNavigateToHome()
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+        }
+    }
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = DentelDarkPurple
@@ -54,13 +97,29 @@ fun PictureUploadScreen(modifier: Modifier = Modifier) {
             )
             PictureUploadScreenContent(
                 modifier = Modifier.weight(0.7f),
+                selectedImageUri = selectedImageUri,
+                onAddButtonClick = { pickImageLauncher.launch("image/*") },
+                onConfirmClick = { viewModel.uploadProfilePicture() },
+                onSkipClick = onNavigateToHome,
+                isUploading = isUploading,
+                userName = userName,
+                uploadProgress = uploadProgress
             )
         }
     }
 }
 
 @Composable
-fun PictureUploadScreenContent(modifier: Modifier = Modifier) {
+fun PictureUploadScreenContent(
+    modifier: Modifier = Modifier,
+    selectedImageUri: Uri?,
+    onAddButtonClick: () -> Unit,
+    onConfirmClick: () -> Unit,
+    onSkipClick: () -> Unit,
+    isUploading: Boolean,
+    userName: String?,
+    uploadProgress: Int
+) {
     Surface(
         color = White,
         modifier = modifier.fillMaxWidth(),
@@ -85,7 +144,7 @@ fun PictureUploadScreenContent(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Johnson Doe",
+                text = userName ?: "No name provided",
                 style = TextStyle(
                     fontSize = 27.sp,
                     fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
@@ -96,8 +155,9 @@ fun PictureUploadScreenContent(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.height(24.dp))
             ProfilePictureWithAddButton (
+                imageUri = selectedImageUri,
                 imageRes = R.drawable.female_avatar,
-                onAddButtonClick = { /* Handle add button click */ },
+                onAddButtonClick = onAddButtonClick,
             )
             Spacer(Modifier.height(32.dp))
             Text(
@@ -123,13 +183,30 @@ fun PictureUploadScreenContent(modifier: Modifier = Modifier) {
                 )
             )
             Spacer(Modifier.height(46.dp))
+            if (isUploading) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Uploading: $uploadProgress%",
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily(Font(R.font.din_next_lt_regular)),
+                            fontWeight = FontWeight(400),
+                            color = Color(0xFF421882),
+                            textAlign = TextAlign.Center,
+                        )
+                    )
+                }
+            } else {
             CommonLargeButton(
                 text = stringResource(R.string.confirm),
-                onClick = {},
+                    onClick = onConfirmClick,
             )
+            }
             Spacer(Modifier.height(8.dp))
             TextButton(
-                onClick = {},
+                onClick = onSkipClick,
             ) {
                 Text(
                     text = stringResource(R.string.skip),
@@ -150,6 +227,7 @@ fun PictureUploadScreenContent(modifier: Modifier = Modifier) {
 
 @Composable
 fun ProfilePictureWithAddButton(
+    imageUri: Uri?,
     @DrawableRes imageRes: Int,
     onAddButtonClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -157,8 +235,13 @@ fun ProfilePictureWithAddButton(
     Box(
         modifier = modifier
     ) {
+        val painter = if (imageUri != null) {
+            rememberAsyncImagePainter(imageUri)
+        } else {
+            painterResource(imageRes)
+        }
         Image(
-            painter = painterResource(imageRes),
+            painter = painter,
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.Center)
@@ -168,8 +251,7 @@ fun ProfilePictureWithAddButton(
         IconButton(
             onClick = onAddButtonClick,
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(64.dp),
+                .align(Alignment.BottomEnd) .size(64.dp),
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_add),
@@ -183,7 +265,7 @@ fun ProfilePictureWithAddButton(
 @Composable
 private fun PictureUploadScreenPreviewEn() {
     DentelTheme {
-        PictureUploadScreen()
+        PictureUploadScreen(onNavigateToHome = {})
     }
 }
 
@@ -191,6 +273,6 @@ private fun PictureUploadScreenPreviewEn() {
 @Composable
 private fun PictureUploadScreenPreviewAr() {
     DentelTheme {
-        PictureUploadScreen()
+        PictureUploadScreen(onNavigateToHome = {})
     }
 }

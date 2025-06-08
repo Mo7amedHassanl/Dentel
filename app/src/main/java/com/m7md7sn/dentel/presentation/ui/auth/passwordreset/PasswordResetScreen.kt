@@ -47,6 +47,7 @@ import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
 import com.m7md7sn.dentel.presentation.ui.auth.viewmodels.PasswordResetViewModel
 import com.m7md7sn.dentel.utils.Result
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -63,13 +64,13 @@ fun PasswordResetScreen(
     LaunchedEffect(passwordResetResult) {
         when (passwordResetResult) {
             is Result.Success -> {
-                scope.launch { snackbarHostState.showSnackbar("Password reset email sent!") }
+                snackbarHostState.showSnackbar("Password reset email sent!")
                 onPasswordResetSent()
                 viewModel.resetPasswordResetResult()
             }
             is Result.Error -> {
                 val errorMessage = (passwordResetResult as Result.Error).message
-                scope.launch { snackbarHostState.showSnackbar(errorMessage) }
+                snackbarHostState.showSnackbar(errorMessage)
                 viewModel.resetPasswordResetResult()
             }
             else -> {}

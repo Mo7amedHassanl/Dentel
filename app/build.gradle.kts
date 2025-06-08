@@ -55,14 +55,21 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
 
+    //Coil
+    implementation(libs.coil.compose)
+
     //Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.auth)
+    implementation(libs.firebase.storage)
 
     //Hilt
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     kapt(libs.hilt.compiler)
+
+    //Cloudinary
+    implementation("com.cloudinary:cloudinary-android:2.0.0")
 
     testImplementation(libs.junit)
 

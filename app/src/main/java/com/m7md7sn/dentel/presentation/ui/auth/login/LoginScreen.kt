@@ -65,10 +65,11 @@ import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import com.google.firebase.auth.FirebaseUser
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (FirebaseUser) -> Unit,
     onNavigateToSignup: () -> Unit,
     onNavigateToPasswordReset: () -> Unit,
     modifier: Modifier = Modifier,
@@ -81,7 +82,7 @@ fun LoginScreen(
     LaunchedEffect(loginResult) {
         when (loginResult) {
             is Result.Success -> {
-                onLoginSuccess()
+                onLoginSuccess((loginResult as Result.Success).data)
                 viewModel.resetLoginResult()
             }
             is Result.Error -> {

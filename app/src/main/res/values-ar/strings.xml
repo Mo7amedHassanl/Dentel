@@ -27,4 +27,6 @@
     <string name="you_are_about_to_end">..انت على وشك الإنتهاء</string>
     <string name="upload_your_profile_picture">.فقط يرجي رفع صورة شخصية لك لإتمام كل شئ</string>
     <string name="skip">تخطي</string>
+    <string name="home_header_description">"سلســلة متنوعـة\nمن الفيديوهــات\nالتوضيــحــيــــــــــــــــــة\nلإجـــــــــــــــــــــــــــراءات \nطـــــب الأسنـــــــان "</string>
+    <string name="choose_part">اختر القسم الذي تريد</string>
 </resources>

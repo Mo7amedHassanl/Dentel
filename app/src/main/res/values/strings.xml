@@ -21,10 +21,12 @@
     <string name="link_not_sent">Didn\'t receive the link?</string>
     <string name="resent">Resend</string>
     <string name="confirm">Confirm</string>
-    <string name="password_reset">تغيير كلمة السر</string>
-    <string name="password_reset_note">ادخل البريد الإلكتروني \nوسيتم ارسال رابط لتغيير كلمة السر</string>
-    <string name="welcome">أهلا بك يا</string>
-    <string name="you_are_about_to_end">..انت على وشك الإنتهاء</string>
-    <string name="upload_your_profile_picture">.فقط يرجي رفع صورة شخصية لك لإتمام كل شئ</string>
-    <string name="skip">تخطي</string>
+    <string name="password_reset">Reset Password</string>
+    <string name="password_reset_note">Enter your email address \n and a link will be sent to reset your password</string>
+    <string name="welcome">Welcome</string>
+    <string name="you_are_about_to_end">You are about to finish..</string>
+    <string name="upload_your_profile_picture">Please upload your profile picture to complete everything.</string>
+    <string name="skip">Skip</string>
+    <string name="home_header_description">"A diverse series\n of explanatory\n videos\n for dental\n procedures"</string>
+    <string name="choose_part">Choose the section you want</string>
 </resources>

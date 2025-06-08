@@ -15,7 +15,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Dentel"
-        tools:targetApi="31">
+        tools:targetApi="31"
+        tools:replace="android:fullBackupContent">
         <activity
             android:name=".app.host.MainActivity"
             android:exported="true"
