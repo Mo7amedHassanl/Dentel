@@ -36,4 +36,7 @@
     <string name="bedo">طب أسنان\nالأطفـــال</string>
     <string name="diagnosis">التشخيص\nوالأمـراض</string>
     <string name="suggested_topics">مواضيع اخترناها لك</string>
+    <string name="search">ابحث</string>
+    <string name="videos">فيديوهات</string>
+    <string name="articles">مقالات</string>
 </resources>

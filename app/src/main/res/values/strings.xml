@@ -36,4 +36,7 @@
     <string name="bedo">Pediatric\nDentistry</string>
     <string name="diagnosis">Diagnosis\n&amp; Diseases</string>
     <string name="suggested_topics">Topics we\'ve chosen for you</string>
+    <string name="search">Search</string>
+    <string name="videos">Videos</string>
+    <string name="articles">Articles</string>
 </resources>
