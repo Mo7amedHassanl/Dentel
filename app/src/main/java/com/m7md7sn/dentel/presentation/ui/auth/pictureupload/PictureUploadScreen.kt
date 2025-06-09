@@ -203,24 +203,24 @@ fun PictureUploadScreenContent(
                 }
                 Spacer(Modifier.height(46.dp))
             } else {
-                CommonLargeButton(
-                    text = stringResource(R.string.confirm),
+            CommonLargeButton(
+                text = stringResource(R.string.confirm),
                     onClick = onConfirmClick,
                     isLoading = isUploading
-                )
+            )
                 Spacer(Modifier.height(20.dp))
-                TextButton(
+            TextButton(
                     onClick = onSkipClick,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(R.string.skip),
-                        style = TextStyle(
-                            fontSize = 16.sp,
+            ) {
+                Text(
+                    text = stringResource(R.string.skip),
+                    style = TextStyle(
+                        fontSize = 16.sp,
                             fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
                             fontWeight = FontWeight(500),
-                            color = Color(0xFF421882),
-                            textAlign = TextAlign.Center,
+                        color = Color(0xFF421882),
+                        textAlign = TextAlign.Center,
                         )
                     )
                 }

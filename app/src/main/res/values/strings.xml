@@ -34,5 +34,6 @@
     <string name="nerve_filling">Root\nCanal</string>
     <string name="fixed_denture">Fixed\nDentures</string>
     <string name="bedo">Pediatric\nDentistry</string>
-    <string name="diagnosis">Diagnosis\nand Diseases</string>
+    <string name="diagnosis">Diagnosis\n&amp; Diseases</string>
+    <string name="suggested_topics">Topics we\'ve chosen for you</string>
 </resources>

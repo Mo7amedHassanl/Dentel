@@ -1,4 +1,6 @@
 [versions]
+accompanistPager = "0.34.0"
+accompanistPagerIndicators = "0.34.0"
 agp = "8.9.1"
 kotlin = "2.0.21"
 hilt = "2.56.1"
@@ -14,6 +16,8 @@ navigationCompose = "2.9.0"
 coil = "2.6.0"
 
 [libraries]
+accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pager-indicators", version.ref = "accompanistPagerIndicators" }
+accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }

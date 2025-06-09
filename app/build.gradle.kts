@@ -71,6 +71,10 @@ dependencies {
     //Cloudinary
     implementation("com.cloudinary:cloudinary-android:2.0.0")
 
+    // Accompanist Pager
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
+
     testImplementation(libs.junit)
 
     androidTestImplementation(libs.androidx.junit)

@@ -109,15 +109,15 @@ fun LoginScreen(
         color = DentelDarkPurple
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                FullDentelHeader(
-                    modifier = Modifier.weight(0.3f),
-                )
-                LoginScreenContent(
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            FullDentelHeader(
+                modifier = Modifier.weight(0.3f),
+            )
+            LoginScreenContent(
                     modifier = Modifier.weight(0.7f),
                     email = uiState.email,
                     onEmailValueChange = viewModel::onEmailChange,
