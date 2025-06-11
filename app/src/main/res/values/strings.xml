@@ -41,4 +41,6 @@
     <string name="articles">Articles</string>
     <string name="like">Like</string>
     <string name="share">Share</string>
+    <string name="fav_videos">الفيديوهات\nالتي أعجبتك</string>
+    <string name="fav_articles">المقــــــــالات\nالتي أعجبتك</string>
 </resources>

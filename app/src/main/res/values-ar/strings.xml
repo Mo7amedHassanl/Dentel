@@ -41,4 +41,6 @@
     <string name="articles">مقالات</string>
     <string name="like">إعجاب</string>
     <string name="share">مشاركة</string>
+    <string name="fav_videos">الفيديوهات\nالتي أعجبتك</string>
+    <string name="fav_articles">المقــــــــالات\nالتي أعجبتك</string>
 </resources>

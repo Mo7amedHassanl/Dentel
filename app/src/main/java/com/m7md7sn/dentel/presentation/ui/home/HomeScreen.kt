@@ -254,7 +254,7 @@ fun SuggestedTopicItem(
     title: String,
     onCardClicked: () -> Unit,
     modifier: Modifier = Modifier
-) {
+){
     Card(
         modifier = modifier
             .width(307.dp)
