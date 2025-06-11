@@ -43,4 +43,7 @@
     <string name="share">مشاركة</string>
     <string name="fav_videos">الفيديوهات\nالتي أعجبتك</string>
     <string name="fav_articles">المقــــــــالات\nالتي أعجبتك</string>
+    <string name="fav_articles_title">المقالات التي أعجبتك</string>
+    <string name="fav_videos_title">الفيديوهات التي أعجبتك</string>
+
 </resources>

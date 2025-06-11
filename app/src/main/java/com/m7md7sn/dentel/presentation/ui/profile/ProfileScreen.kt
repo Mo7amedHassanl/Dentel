@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -170,6 +171,8 @@ fun FavoriteItem(
 fun FavoritesButtons(
     modifier: Modifier = Modifier
 ) {
+    val currentLanguage = LocalConfiguration.current.locale.language
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -183,8 +186,7 @@ fun FavoritesButtons(
             iconRes = R.drawable.ic_fav_videos,
             clickedIconRes = R.drawable.ic_fav_videos_selected,
             text = R.string.fav_videos,
-            highlightedText = "الفيديوهات",
-            highlightedTextColor = DentelBrightBlue,
+            highlightedTextColor =  DentelBrightBlue,
             color = DentelBrightBlue,
         )
         Spacer(modifier = Modifier.width(24.dp))
@@ -195,7 +197,6 @@ fun FavoritesButtons(
             iconRes = R.drawable.ic_fav_articles,
             clickedIconRes = R.drawable.ic_fav_articles_selected,
             text = R.string.fav_articles,
-            highlightedText = "المقــــــــالات",
             highlightedTextColor = DentelLightPurple,
             color = DentelLightPurple,
         )
@@ -209,15 +210,12 @@ fun FavoriteButton(
     @DrawableRes iconRes: Int,
     @DrawableRes clickedIconRes: Int,
     @StringRes text: Int,
-    highlightedText: String,
     highlightedTextColor: Color,
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    val fullString = stringResource(text)
-
-    val startIndex = fullString.indexOf(highlightedText)
-    val endIndex = startIndex + highlightedText.length
+    val fullTitle = stringResource(text)
+    val lines = fullTitle.split("\n")
 
     Button(
         onClick = onClick,
@@ -248,31 +246,33 @@ fun FavoriteButton(
             Spacer(modifier = Modifier.width(16.dp))
 
 
-            Text(
-                text = buildAnnotatedString {
-                    if (startIndex != -1) {
-                        withStyle(style = SpanStyle(color = DentelDarkPurple)) {
-                            append(fullString.substring(0, startIndex))
-                        }
-                        withStyle(style = SpanStyle(color = if (clicked) White else highlightedTextColor)) {
-                            append(fullString.substring(startIndex, endIndex))
-                        }
-                        withStyle(style = SpanStyle(color = DentelDarkPurple)) {
-                            append(fullString.substring(endIndex))
-                        }
-                    } else {
-                        append(fullString)
-                    }
-                },
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
-                    fontWeight = FontWeight(700),
-                    color = Color(0xFFFFFFFF),
-                    textAlign = TextAlign.Center,
+            if (lines.isNotEmpty()) {
+                Text(
+                    text = lines[0],
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
+                        fontWeight = FontWeight(700),
+                        color = if(clicked) White else highlightedTextColor,
+                        textAlign = TextAlign.Center,
+                    )
                 )
-            )
+            }
+
+            if (lines.size > 1) {
+                Text(
+                    text = lines[1],
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
+                        fontWeight = FontWeight(700),
+                        color = DentelDarkPurple,
+                        textAlign = TextAlign.Center,
+                    )
+                )
+            }
         }
     }
 }
