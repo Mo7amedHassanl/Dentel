@@ -33,6 +33,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -57,10 +63,28 @@ import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
 import com.m7md7sn.dentel.presentation.theme.DentelBrightBlue
 import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.m7md7sn.dentel.presentation.ui.section.TopicType
+import com.m7md7sn.dentel.presentation.ui.section.SectionViewModel
+import com.m7md7sn.dentel.presentation.ui.section.Topic
+import com.m7md7sn.dentel.presentation.ui.section.SectionUiState
 
 @Composable
-fun SectionScreen(modifier: Modifier = Modifier) {
+fun SectionScreen(
+    section: Section,
+    modifier: Modifier = Modifier,
+    viewModel: SectionViewModel = hiltViewModel(),
+    onTopicClick: (Topic) -> Unit = {}
+) {
+    val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+
+    // Set section only once
+    LaunchedEffect(section) {
+        viewModel.setSection(section)
+    }
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = DentelDarkPurple
@@ -92,26 +116,32 @@ fun SectionScreen(modifier: Modifier = Modifier) {
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SectionHeader(
-                    section = Section(
-                        imageRes = R.drawable.ic_mobile_denture, // Replace with your actual drawable resource
-                        titleRes = R.string.mobile_denture,     // Replace with your actual string resource
-                        color = Color(0xFF6A89E0) // Example color (light green)
-                    )
+                uiState.section?.let {
+                    SectionHeader(section = it)
+                }
+                SectionSearchBar(
+                    query = uiState.searchQuery,
+                    onQueryChange = viewModel::onSearchQueryChange
                 )
-                SectionSearchBar()
-                Spacer(modifier = Modifier.height(20.dp))
-                ContentTypeButtons()
+                Spacer(modifier = Modifier.height(32.dp))
+                ContentTypeButtons(
+                    selectedType = uiState.selectedType,
+                    onTypeSelected = viewModel::selectType
+                )
                 Spacer(modifier = Modifier.height(10.dp))
-                TopicsList()
+                TopicsList(
+                    topics = uiState.topics,
+                    onTopicClick = onTopicClick
+                )
             }
         }
-
     }
 }
 
 @Composable
 fun TopicsList(
+    topics: List<Topic>,
+    onTopicClick: (Topic) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -133,9 +163,16 @@ fun TopicsList(
                 .padding(vertical = 16.dp, horizontal = 22.dp)
         ) {
             LazyColumn() {
-                items(10) {
+                items(topics.size) { idx ->
+                    val topic = topics[idx]
                     TopicItem(
-                        type = "article"
+                        title = topic.title,
+                        subtitle = topic.subtitle,
+                        type = when (topic.type) {
+                            is TopicType.Article -> "article"
+                            is TopicType.Video -> "video"
+                        },
+                        onCardClicked = { onTopicClick(topic) }
                     )
                 }
             }
@@ -214,6 +251,8 @@ fun TopicItem(
 
 @Composable
 fun ContentTypeButtons(
+    selectedType: TopicType,
+    onTypeSelected: (TopicType) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -227,16 +266,16 @@ fun ContentTypeButtons(
             text = R.string.videos,
             iconRes = R.drawable.ic_video,
             clickedIconRes = R.drawable.ic_video_selected,
-            clicked = true,
-            onClick = { },
+            clicked = selectedType is TopicType.Video,
+            onClick = { onTypeSelected(TopicType.Video) },
             color = DentelBrightBlue
         )
         ContentTypeButton(
             text = R.string.articles,
             iconRes = R.drawable.ic_article,
             clickedIconRes = R.drawable.ic_articles_selected,
-            clicked = false,
-            onClick = { },
+            clicked = selectedType is TopicType.Article,
+            onClick = { onTypeSelected(TopicType.Article) },
             color = DentelLightPurple
         )
     }
@@ -296,16 +335,16 @@ fun ContentTypeButton(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SectionSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val query = ""
     SearchBar(
         query = query,
-        onQueryChange = {},
+        onQueryChange = onQueryChange,
         onSearch = {},
         active = false,
         onActiveChange = {},
@@ -412,7 +451,11 @@ fun SectionHeader(
 @Composable
 private fun SectionScreenPreviewEn() {
     DentelTheme {
-        SectionScreen()
+        SectionScreen(Section(
+            imageRes = R.drawable.ic_mobile_denture,
+            titleRes = R.string.mobile_denture,
+            color = Color(0xFF6A89E0)
+        ))
     }
 }
 
@@ -420,6 +463,10 @@ private fun SectionScreenPreviewEn() {
 @Composable
 private fun SectionScreenPreviewAr() {
     DentelTheme {
-        SectionScreen()
+        SectionScreen(Section(
+            imageRes = R.drawable.ic_mobile_denture,
+            titleRes = R.string.mobile_denture,
+            color = Color(0xFF6A89E0)
+        ))
     }
 }

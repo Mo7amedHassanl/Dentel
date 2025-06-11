@@ -78,9 +78,15 @@ import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
 import kotlin.math.ceil
 import java.util.Locale
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = hiltViewModel(),
+    onSectionClick: (Int) -> Unit
+) {
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsState()
     val currentLanguage = LocalConfiguration.current.locale.language
@@ -106,7 +112,8 @@ fun HomeScreen(modifier: Modifier = Modifier, viewModel: HomeViewModel = hiltVie
             )
             Spacer(Modifier.height(16.dp))
             SectionsGrid(
-                uiState.sections
+                sections = uiState.sections,
+                onSectionClick = onSectionClick
             )
             Spacer(Modifier.height(24.dp))
             Box(
@@ -281,10 +288,10 @@ fun SuggestedTopicItem(
     }
 }
 
-
 @Composable
 fun SectionsGrid(
     sections: List<Section>,
+    onSectionClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val gridState = rememberLazyGridState()
@@ -310,12 +317,13 @@ fun SectionsGrid(
                 .width(312.dp),
 
             ) {
-            items(sections) {
+            items(sections.size) { idx ->
+                val section = sections[idx]
                 SectionGridItem(
-                    imageRes = it.imageRes,
-                    titleRes = it.titleRes,
-                    color = it.color,
-                    onCardClicked = { /* TODO: Handle card click */ }
+                    imageRes = section.imageRes,
+                    titleRes = section.titleRes,
+                    color = section.color,
+                    onCardClicked = { onSectionClick(idx) }
                 )
             }
         }
@@ -399,13 +407,13 @@ fun SectionGridItem(
                     val lines = fullTitle.split("\n")
 
                     if (lines.isNotEmpty()) {
-                        Text(
+                Text(
                             text = lines[0],
-                            style = TextStyle(
+                    style = TextStyle(
                                 fontSize = 21.sp,
-                                lineHeight = 28.sp,
-                                fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
-                                fontWeight = FontWeight(700),
+                        lineHeight = 28.sp,
+                        fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
+                        fontWeight = FontWeight(700),
                                 color = DentelDarkPurple,
                                 letterSpacing = 0.63.sp,
                             )
@@ -421,9 +429,9 @@ fun SectionGridItem(
                                 fontFamily = FontFamily(Font(R.font.din_next_lt_regular)),
                                 fontWeight = FontWeight(400),
                                 color = Color.White,
-                                letterSpacing = 0.63.sp,
+                        letterSpacing = 0.63.sp,
                             )
-                        )
+                )
                     }
                 }
             }
@@ -459,29 +467,29 @@ fun SectionTitleWithLogo(
 }
 
 @Composable
-private fun BoxScope.SubtitleWithLogo(
+fun BoxScope.SubtitleWithLogo(
     titleRes: Int,
     highlightedText: String,
     highlightedTextColor: Color
 ) {
-    Row(
-        modifier = Modifier
-            .padding(start = 34.dp)
-            .align(Alignment.BottomStart),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            painter = painterResource(R.drawable.ic_mini_logo),
-            contentDescription = null,
-        )
-        Spacer(Modifier.width(22.dp))
+        Row(
+            modifier = Modifier
+                .padding(start = 34.dp)
+                .align(Alignment.BottomStart),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_mini_logo),
+                contentDescription = null,
+            )
+            Spacer(Modifier.width(22.dp))
 
         val fullString = stringResource(titleRes)
 
         val startIndex = fullString.indexOf(highlightedText)
         val endIndex = startIndex + highlightedText.length
 
-        Text(
+            Text(
             text = buildAnnotatedString {
                 if (startIndex != -1) {
                     withStyle(style = SpanStyle(color = White)) {
@@ -497,17 +505,17 @@ private fun BoxScope.SubtitleWithLogo(
                     append(fullString)
                 }
             },
-            style = TextStyle(
-                fontSize = 15.sp,
-                lineHeight = 20.sp,
-                fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
-                fontWeight = FontWeight(500),
+                style = TextStyle(
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
+                    fontWeight = FontWeight(500),
                 color = White,
-                textAlign = TextAlign.Center,
-                letterSpacing = 0.38.sp,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.38.sp,
+                )
             )
-        )
-    }
+        }
 }
 
 @Composable
@@ -629,7 +637,7 @@ fun HomeHeader(modifier: Modifier = Modifier) {
 @Composable
 private fun HomeScreenPreviewEn() {
     DentelTheme {
-        HomeScreen()
+        HomeScreen(onSectionClick = {})
     }
 }
 
@@ -637,6 +645,6 @@ private fun HomeScreenPreviewEn() {
 @Composable
 private fun HomeScreenPreviewAr() {
     DentelTheme {
-        HomeScreen()
+        HomeScreen(onSectionClick = {})
     }
 }

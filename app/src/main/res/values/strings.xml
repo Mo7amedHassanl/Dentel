@@ -31,7 +31,7 @@
     <string name="choose_part">Choose the section you want</string>
     <string name="regular_filling">Regular\nFilling</string>
     <string name="mobile_denture">Removable\nDentures</string>
-    <string name="nerve_filling">Root\nCanal</string>
+    <string name="nerve_filling">Nerve\nFilling</string>
     <string name="fixed_denture">Fixed\nDentures</string>
     <string name="bedo">Pediatric\nDentistry</string>
     <string name="diagnosis">Diagnosis\n&amp; Diseases</string>
@@ -39,4 +39,6 @@
     <string name="search">Search</string>
     <string name="videos">Videos</string>
     <string name="articles">Articles</string>
+    <string name="like">Like</string>
+    <string name="share">Share</string>
 </resources>

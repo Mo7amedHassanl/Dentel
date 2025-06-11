@@ -39,4 +39,6 @@
     <string name="search">ابحث</string>
     <string name="videos">فيديوهات</string>
     <string name="articles">مقالات</string>
+    <string name="like">إعجاب</string>
+    <string name="share">مشاركة</string>
 </resources>
