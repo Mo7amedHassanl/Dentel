@@ -45,5 +45,11 @@
     <string name="fav_articles">Articles\nYou Liked</string>
     <string name="fav_articles_title">Articles You Liked</string>
     <string name="fav_videos_title">Videos You Liked</string>
+    <string name="settings">الإعدادات</string>
+    <string name="account">الحســاب</string>
+    <string name="notifications">الإشعارات</string>
+    <string name="language">لغة التطبيق</string>
+    <string name="support">الدعم</string>
+    <string name="logout">تسجيل الخروج</string>
 
 </resources>
