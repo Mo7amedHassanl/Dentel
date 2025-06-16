@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +25,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.SearchBar
@@ -72,7 +74,7 @@ import com.m7md7sn.dentel.presentation.ui.section.SectionUiState
 
 @Composable
 fun SectionScreen(
-    section: Section,
+    sectionId: String,
     modifier: Modifier = Modifier,
     viewModel: SectionViewModel = hiltViewModel(),
     onTopicClick: (Topic) -> Unit = {}
@@ -81,8 +83,8 @@ fun SectionScreen(
     val scrollState = rememberScrollState()
 
     // Set section only once
-    LaunchedEffect(section) {
-        viewModel.setSection(section)
+    LaunchedEffect(sectionId) {
+        viewModel.setSectionById(sectionId)
     }
 
     Surface(
@@ -116,32 +118,60 @@ fun SectionScreen(
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                uiState.section?.let {
+                val section = (uiState as? SectionUiState.Success)?.section
+                val searchQuery = (uiState as? SectionUiState.Success)?.searchQuery ?: ""
+                val selectedType = (uiState as? SectionUiState.Success)?.selectedType ?: TopicType.Article
+
+                section?.let {
                     SectionHeader(section = it)
                 }
                 SectionSearchBar(
-                    query = uiState.searchQuery,
+                    query = searchQuery,
                     onQueryChange = viewModel::onSearchQueryChange
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 ContentTypeButtons(
-                    selectedType = uiState.selectedType,
+                    selectedType = selectedType,
                     onTypeSelected = viewModel::selectType
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                TopicsList(
-                    topics = uiState.topics,
-                    onTopicClick = onTopicClick
-                )
+
+                when (uiState) {
+                    is SectionUiState.Loading -> {
+                        TopicsOrEmptyMessage(
+                            topics = emptyList(), // Show empty list while loading
+                            onTopicClick = onTopicClick,
+                            isLoading = true
+                        )
+                    }
+
+                    is SectionUiState.Error -> {
+                    Text(
+                            text = "Error: ${(uiState as SectionUiState.Error).message}",
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    }
+
+                    is SectionUiState.Success -> {
+                        val successState = uiState as SectionUiState.Success
+                        TopicsOrEmptyMessage(
+                            topics = successState.topics,
+                            onTopicClick = onTopicClick,
+                            isLoading = false // Data loaded, no longer loading
+                    )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun TopicsList(
+fun TopicsOrEmptyMessage(
     topics: List<Topic>,
     onTopicClick: (Topic) -> Unit,
+    isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -160,8 +190,22 @@ fun TopicsList(
                 .height(800.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color.White)
-                .padding(vertical = 16.dp, horizontal = 22.dp)
+                .padding(vertical = 16.dp, horizontal = 22.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
+            if (isLoading) {
+                CircularProgressIndicator(color = Color(0xFF421882))
+            } else if (topics.isEmpty()) {
+                Text(
+                    text = "No topics found for this section.",
+                    color = Color(0xFF421882),
+                    fontFamily = FontFamily(Font(R.font.din_next_lt_regular)),
+                    fontWeight = FontWeight(400),
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(16.dp)
+                )
+            } else {
             LazyColumn() {
                 items(topics.size) { idx ->
                     val topic = topics[idx]
@@ -169,11 +213,12 @@ fun TopicsList(
                         title = topic.title,
                         subtitle = topic.subtitle,
                         type = when (topic.type) {
-                            is TopicType.Article -> "article"
-                            is TopicType.Video -> "video"
+                                TopicType.Article -> "article"
+                                TopicType.Video -> "video"
                         },
                         onCardClicked = { onTopicClick(topic) }
                     )
+                    }
                 }
             }
         }
@@ -266,7 +311,7 @@ fun ContentTypeButtons(
             text = R.string.videos,
             iconRes = R.drawable.ic_video,
             clickedIconRes = R.drawable.ic_video_selected,
-            clicked = selectedType is TopicType.Video,
+            clicked = selectedType == TopicType.Video,
             onClick = { onTypeSelected(TopicType.Video) },
             color = DentelBrightBlue
         )
@@ -274,7 +319,7 @@ fun ContentTypeButtons(
             text = R.string.articles,
             iconRes = R.drawable.ic_article,
             clickedIconRes = R.drawable.ic_articles_selected,
-            clicked = selectedType is TopicType.Article,
+            clicked = selectedType == TopicType.Article,
             onClick = { onTypeSelected(TopicType.Article) },
             color = DentelLightPurple
         )
@@ -317,7 +362,7 @@ fun ContentTypeButton(
                 painter = painterResource(id = if (clicked) clickedIconRes else iconRes),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
-            )
+                )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = stringResource(text),
@@ -451,11 +496,7 @@ fun SectionHeader(
 @Composable
 private fun SectionScreenPreviewEn() {
     DentelTheme {
-        SectionScreen(Section(
-            imageRes = R.drawable.ic_mobile_denture,
-            titleRes = R.string.mobile_denture,
-            color = Color(0xFF6A89E0)
-        ))
+        SectionScreen("mobile_denture")
     }
 }
 
@@ -463,10 +504,6 @@ private fun SectionScreenPreviewEn() {
 @Composable
 private fun SectionScreenPreviewAr() {
     DentelTheme {
-        SectionScreen(Section(
-            imageRes = R.drawable.ic_mobile_denture,
-            titleRes = R.string.mobile_denture,
-            color = Color(0xFF6A89E0)
-        ))
+        SectionScreen("mobile_denture")
     }
 }

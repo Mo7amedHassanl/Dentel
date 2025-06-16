@@ -52,6 +52,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -85,11 +86,12 @@ import androidx.navigation.compose.rememberNavController
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
-    onSectionClick: (Int) -> Unit
+    onSectionClick: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsState()
     val currentLanguage = LocalConfiguration.current.locale.language
+    val context = LocalContext.current
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -113,7 +115,9 @@ fun HomeScreen(
             Spacer(Modifier.height(16.dp))
             SectionsGrid(
                 sections = uiState.sections,
-                onSectionClick = onSectionClick
+                onSectionClick = { section ->
+                    onSectionClick(section.id)
+                }
             )
             Spacer(Modifier.height(24.dp))
             Box(
@@ -291,7 +295,7 @@ fun SuggestedTopicItem(
 @Composable
 fun SectionsGrid(
     sections: List<Section>,
-    onSectionClick: (Int) -> Unit,
+    onSectionClick: (Section) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val gridState = rememberLazyGridState()
@@ -323,7 +327,7 @@ fun SectionsGrid(
                     imageRes = section.imageRes,
                     titleRes = section.titleRes,
                     color = section.color,
-                    onCardClicked = { onSectionClick(idx) }
+                    onCardClicked = { onSectionClick(section) }
                 )
             }
         }

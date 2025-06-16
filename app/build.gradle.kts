@@ -5,6 +5,7 @@ plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.hilt)
     kotlin("kapt")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -62,6 +63,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.auth)
     implementation(libs.firebase.storage)
+    implementation(libs.firebase.firestore.ktx)
 
     //Hilt
     implementation(libs.hilt.android)
@@ -69,11 +71,13 @@ dependencies {
     kapt(libs.hilt.compiler)
 
     //Cloudinary
-    implementation("com.cloudinary:cloudinary-android:2.0.0")
+    implementation(libs.cloudinary.android)
 
     // Accompanist Pager
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pager.indicators)
+
+    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
 
     testImplementation(libs.junit)
 

@@ -58,17 +58,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import com.m7md7sn.dentel.presentation.ui.article.ArticleUiState
+import com.m7md7sn.dentel.presentation.ui.section.Topic
 
 @Composable
-fun ArticleScreen(title: String, subtitle: String, modifier: Modifier = Modifier, viewModel: ArticleViewModel = hiltViewModel()) {
-    val uiState by viewModel.uiState.collectAsState()
-
-    // Set article on first composition
-    LaunchedEffect(title, subtitle) {
-        viewModel.setArticle(Article(id = "", title = title, subtitle = subtitle, content = subtitle))
-    }
-
-    val article = uiState.article
+fun ArticleScreen(topic: Topic?, modifier: Modifier = Modifier) {
     val currentLanguage = LocalConfiguration.current.locale.language
 
     Surface(
@@ -81,7 +74,7 @@ fun ArticleScreen(title: String, subtitle: String, modifier: Modifier = Modifier
                 .verticalScroll(enabled = true, state = rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            ArticleVideoTitle(title = article?.title ?: "")
+            ArticleVideoTitle(title = topic?.title ?: "")
             HorizontalDivider(
                 Modifier
                     .width(330.dp),
@@ -98,7 +91,7 @@ fun ArticleScreen(title: String, subtitle: String, modifier: Modifier = Modifier
                     .padding(horizontal = 32.dp)
             )
             Spacer(modifier = Modifier.height(28.dp))
-            ArticleContent(subtitle = article?.subtitle ?: "")
+            ArticleContent(subtitle = topic?.subtitle ?: "")
             Spacer(modifier = Modifier.height(32.dp))
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -225,7 +218,7 @@ fun ArticleVideoTitle(title: String, modifier: Modifier = Modifier) {
 @Composable
 private fun ArticleScreenPreviewEn() {
     DentelTheme {
-        ArticleScreen("Article Title", "Article Subtitle")
+        ArticleScreen(null)
     }
 }
 
@@ -233,6 +226,6 @@ private fun ArticleScreenPreviewEn() {
 @Composable
 private fun ArticleScreenPreviewAr() {
     DentelTheme {
-        ArticleScreen("عنوان المقال", "ملخص المقال")
+        ArticleScreen(null)
     }
 }

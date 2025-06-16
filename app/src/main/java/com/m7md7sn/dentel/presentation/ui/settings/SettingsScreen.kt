@@ -1,6 +1,7 @@
 package com.m7md7sn.dentel.presentation.ui.settings
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m7md7sn.dentel.R
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
+import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
 
 @Composable
@@ -55,6 +57,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             SettingsHeader()
+            Spacer(Modifier.height(16.dp))
             SettingsList()
         }
     }
@@ -114,7 +117,7 @@ fun SettingsItem(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
         ),
-        colors = CardDefaults.cardColors(containerColor = DentelDarkPurple.copy(alpha = 0.1f)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE5E1FF)),
         onClick = onCardClicked
     ) {
         Row(

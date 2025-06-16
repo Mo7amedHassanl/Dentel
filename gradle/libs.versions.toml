@@ -2,6 +2,8 @@
 accompanistPager = "0.34.0"
 accompanistPagerIndicators = "0.34.0"
 agp = "8.9.1"
+cloudinaryAndroid = "2.0.0"
+firebaseFirestoreKtx = "25.1.4"
 kotlin = "2.0.21"
 hilt = "2.56.1"
 coreKtx = "1.16.0"
@@ -20,6 +22,8 @@ accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pa
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+cloudinary-android = { module = "com.cloudinary:cloudinary-android", version.ref = "cloudinaryAndroid" }
+firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
