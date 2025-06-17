@@ -141,11 +141,11 @@ fun VideoScreen(topic: Topic?, modifier: Modifier = Modifier) {
                 )
             } else {
                 // Fallback to placeholder if videoId is null or invalid
-                Image(
-                    painter = painterResource(id = R.drawable.ic_video_placeholder),
-                    contentDescription = "Video Player Placeholder",
-                    modifier = Modifier
-                )
+            Image(
+                painter = painterResource(id = R.drawable.ic_video_placeholder),
+                contentDescription = "Video Player Placeholder",
+                modifier = Modifier
+            )
             }
             Spacer(modifier = Modifier.height(28.dp))
             VideoDescriptionWithLikeAndShareButtons(description = topic?.content ?: "")

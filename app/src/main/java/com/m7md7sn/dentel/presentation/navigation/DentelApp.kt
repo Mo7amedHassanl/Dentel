@@ -5,13 +5,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.m7md7sn.dentel.R
 import com.m7md7sn.dentel.presentation.ui.auth.emailverification.EmailVerificationScreen
 import com.m7md7sn.dentel.presentation.ui.auth.login.LoginScreen
 import com.m7md7sn.dentel.presentation.ui.auth.passwordreset.PasswordResetScreen
@@ -24,7 +29,11 @@ import com.m7md7sn.dentel.presentation.navigation.DentelBottomBar
 import com.m7md7sn.dentel.presentation.navigation.BottomNavScreen
 import com.m7md7sn.dentel.presentation.ui.profile.ProfileScreen
 import com.m7md7sn.dentel.presentation.ui.section.TopicType
+import com.m7md7sn.dentel.presentation.ui.settings.SettingsContent
 import com.m7md7sn.dentel.presentation.ui.settings.SettingsScreen
+import com.m7md7sn.dentel.presentation.ui.settings.SettingsViewModel
+import com.m7md7sn.dentel.presentation.navigation.DentelTopBar
+import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -53,9 +62,50 @@ fun DentelApp() {
         else -> false
     }
 
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val settingsUiState by settingsViewModel.uiState.collectAsState()
+
+    val topBarTitle: String = when (currentRoute) {
+        Screen.Settings.route -> settingsUiState.currentContent?.let { stringResource(id = it.titleResId) } ?: stringResource(id = R.string.settings)
+        else -> ""
+    }
+
+    val topBarIcon: ImageVector? = when (currentRoute) {
+        Screen.Settings.route -> settingsUiState.currentContent?.icon
+        else -> null
+    }
+
+    val topBarShowBackButton: Boolean = when (currentRoute) {
+        Screen.Settings.route -> settingsUiState.currentContent != null
+        Screen.Splash.route, Screen.Login.route, Screen.SignUp.route, Screen.EmailVerification.route, Screen.PasswordReset.route, Screen.PictureUpload.route -> false
+        else -> navController.previousBackStackEntry != null
+    }
+
+    val topBarOnBackClick: () -> Unit = when (currentRoute) {
+        Screen.Settings.route -> { { settingsViewModel.clearSettingsContent() } }
+        Screen.Splash.route, Screen.Login.route, Screen.SignUp.route, Screen.EmailVerification.route, Screen.PasswordReset.route, Screen.PictureUpload.route -> { {} }
+        else -> { { navController.popBackStack() } }
+    }
+
+    val showTopBar = when (currentRoute) {
+        Screen.Splash.route, Screen.Login.route, Screen.SignUp.route, Screen.EmailVerification.route, Screen.PasswordReset.route, Screen.PictureUpload.route -> false
+        else -> !showBottomBar
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
+        topBar = {
+            if (showTopBar) {
+                DentelTopBar(
+                    navController = navController,
+                    title = topBarTitle,
+                    icon = topBarIcon,
+                    showBackButton = topBarShowBackButton,
+                    onBackClick = topBarOnBackClick
+                )
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 DentelBottomBar(currentRoute = currentRoute) { screen ->
@@ -164,7 +214,17 @@ fun DentelApp() {
                 ProfileScreen()
             }
             composable(Screen.Settings.route) {
-                SettingsScreen()
+                val settingsViewModel: SettingsViewModel = hiltViewModel()
+                val uiState by settingsViewModel.uiState.collectAsState()
+
+                LaunchedEffect(uiState.isLoggedOut) {
+                    if (uiState.isLoggedOut) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    }
+                }
+                SettingsScreen(viewModel = settingsViewModel)
             }
             composable(Screen.Notifications.route) {
                 androidx.compose.material3.Text("Notifications Screen")

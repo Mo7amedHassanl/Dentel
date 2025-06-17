@@ -32,6 +32,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -55,6 +57,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.m7md7sn.dentel.R
 import com.m7md7sn.dentel.presentation.theme.DentelBrightBlue
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
@@ -64,7 +68,9 @@ import com.m7md7sn.dentel.presentation.ui.home.SuggestedTopicItem
 
 
 @Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
+fun ProfileScreen(modifier: Modifier = Modifier, viewModel: ProfileViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = Color.White
@@ -73,7 +79,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ProfileHeader()
+            ProfileHeader(uiState = uiState)
             Spacer(Modifier.height(16.dp))
             FavoritesButtons()
             Spacer(Modifier.height(12.dp))
@@ -280,6 +286,7 @@ fun FavoriteButton(
 @Composable
 fun ProfileHeader(
     modifier: Modifier = Modifier,
+    uiState: ProfileUiState
 ) {
     Box(
         modifier = modifier
@@ -294,7 +301,7 @@ fun ProfileHeader(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp)
+                        .height(210.dp)
                         .background(
                             color = Color(0xFF421882),
                             shape = RoundedCornerShape(
@@ -327,14 +334,18 @@ fun ProfileHeader(
         }
         ProfilePictureWithName(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
+                .align(Alignment.BottomCenter),
+            userName = uiState.userName,
+            profilePictureUrl = uiState.profilePictureUrl
         )
     }
 }
 
 @Composable
 fun ProfilePictureWithName(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    userName: String,
+    profilePictureUrl: String?
 ) {
     Column(
         modifier = modifier,
@@ -355,9 +366,9 @@ fun ProfilePictureWithName(
                 color = Color.White
             )
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.male_avatar),
-                contentDescription = null,
+            AsyncImage(
+                model = profilePictureUrl,
+                contentDescription = "Profile Picture",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
@@ -369,7 +380,7 @@ fun ProfilePictureWithName(
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Johnson Doe",
+            text = userName,
             style = TextStyle(
                 fontSize = 24.sp,
                 fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
