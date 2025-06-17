@@ -1,6 +1,7 @@
 package com.m7md7sn.dentel.presentation.ui.video
 
 import android.app.Activity
+import android.content.Intent
 import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
@@ -148,7 +149,7 @@ fun VideoScreen(topic: Topic?, modifier: Modifier = Modifier) {
             )
             }
             Spacer(modifier = Modifier.height(28.dp))
-            VideoDescriptionWithLikeAndShareButtons(description = topic?.content ?: "")
+            VideoDescriptionWithLikeAndShareButtons(description = topic?.content ?: "", title = topic?.title ?: "", videoUrl = topic?.videoUrl ?: "")
             Spacer(modifier = Modifier.height(32.dp))
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -226,7 +227,12 @@ private fun extractYoutubeVideoId(youtubeUrl: String): String? {
 }
 
 @Composable
-fun VideoDescriptionWithLikeAndShareButtons(description: String, modifier: Modifier = Modifier) {
+fun VideoDescriptionWithLikeAndShareButtons(
+    description: String,
+    modifier: Modifier = Modifier,
+    title: String = "",
+    videoUrl: String = ""
+) {
     Column(
         modifier = modifier
             .fillMaxWidth(),
@@ -277,8 +283,10 @@ fun VideoDescriptionWithLikeAndShareButtons(description: String, modifier: Modif
                 }
             }
             LikeAndShareButtons(
-                modifier = Modifier
-                    .align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
+                title = title,
+                url = videoUrl,
+                isArticle = false
             )
         }
         Box(
@@ -304,7 +312,14 @@ fun VideoDescriptionWithLikeAndShareButtons(description: String, modifier: Modif
 }
 
 @Composable
-fun LikeAndShareButtons(modifier: Modifier = Modifier) {
+fun LikeAndShareButtons(
+    modifier: Modifier = Modifier,
+    title: String = "",
+    url: String = "",
+    isArticle: Boolean = false
+) {
+    val context = LocalContext.current
+
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -318,8 +333,25 @@ fun LikeAndShareButtons(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.width(16.dp))
         VideoButton(
             text = R.string.share,
-            onClick = { /* Handle share action */ },
-            icon = Icons.Outlined.Share, // Replace with a share icon
+            onClick = {
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    if (isArticle) {
+                        // Article share message
+                        putExtra(Intent.EXTRA_TEXT,
+                            "Check this article: $title\n" +
+                            "App link in store: https://play.google.com/store/apps/details?id=${context.packageName}")
+                    } else {
+                        // Video share message
+                        putExtra(Intent.EXTRA_TEXT,
+                            "Check this video: $title\n" +
+                            "YouTube link: $url\n" +
+                            "App link in store: https://play.google.com/store/apps/details?id=${context.packageName}")
+                    }
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Share via"))
+            },
+            icon = Icons.Outlined.Share,
             tint = Color.Black,
         )
     }

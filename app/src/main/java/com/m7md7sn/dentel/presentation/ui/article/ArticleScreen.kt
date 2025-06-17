@@ -1,5 +1,6 @@
 package com.m7md7sn.dentel.presentation.ui.article
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -137,7 +138,7 @@ fun ArticleScreen(topic: Topic?, modifier: Modifier = Modifier) {
             }
 
             Spacer(modifier = Modifier.height(28.dp))
-            ArticleContent(content = topic?.content ?: "")
+            ArticleContent(content = topic?.content ?: "", title = topic?.title ?: "")
             Spacer(modifier = Modifier.height(32.dp))
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -167,7 +168,11 @@ fun ArticleScreen(topic: Topic?, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ArticleContent(content: String, modifier: Modifier = Modifier) {
+fun ArticleContent(
+    content: String,
+    modifier: Modifier = Modifier,
+    title: String = ""
+) {
     Column(
         modifier = modifier
             .fillMaxWidth(),
@@ -218,8 +223,9 @@ fun ArticleContent(content: String, modifier: Modifier = Modifier) {
                 }
             }
             LikeAndShareButtons(
-                modifier = Modifier
-                    .align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
+                title = title,
+                isArticle = true
             )
         }
         Box(
