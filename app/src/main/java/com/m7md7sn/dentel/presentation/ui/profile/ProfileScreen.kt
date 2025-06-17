@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.shape.CircleShape
@@ -76,7 +77,9 @@ fun ProfileScreen(modifier: Modifier = Modifier, viewModel: ProfileViewModel = h
         color = Color.White
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(bottom = 16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             ProfileHeader(uiState = uiState)
@@ -192,7 +195,7 @@ fun FavoritesButtons(
             iconRes = R.drawable.ic_fav_videos,
             clickedIconRes = R.drawable.ic_fav_videos_selected,
             text = R.string.fav_videos,
-            highlightedTextColor =  DentelBrightBlue,
+            highlightedTextColor = DentelBrightBlue,
             color = DentelBrightBlue,
         )
         Spacer(modifier = Modifier.width(24.dp))
@@ -226,12 +229,12 @@ fun FavoriteButton(
     Button(
         onClick = onClick,
         modifier = modifier
+            .width(140.dp)
+            .height(120.dp)
             .shadow(
                 elevation = 4.dp,
                 shape = RoundedCornerShape(size = 18.dp)
-            )
-            .width(140.dp)
-            .height(120.dp),
+            ),
         shape = RoundedCornerShape(size = 18.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (clicked) color else Color(0xFFFFFFFF),
@@ -260,7 +263,7 @@ fun FavoriteButton(
                         lineHeight = 20.sp,
                         fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
                         fontWeight = FontWeight(700),
-                        color = if(clicked) White else highlightedTextColor,
+                        color = if (clicked) White else highlightedTextColor,
                         textAlign = TextAlign.Center,
                     )
                 )
@@ -301,7 +304,7 @@ fun ProfileHeader(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(210.dp)
+                        .height(180.dp)
                         .background(
                             color = Color(0xFF421882),
                             shape = RoundedCornerShape(

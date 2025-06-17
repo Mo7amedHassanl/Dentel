@@ -74,7 +74,6 @@ fun DentelBottomBar(
                     Icon(
                         painter = painterResource(id = item.icon),
                         contentDescription = item.contentDescription,
-
                     )
                 },
                 colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
@@ -86,4 +85,4 @@ fun DentelBottomBar(
             )
         }
     }
-} 
+}

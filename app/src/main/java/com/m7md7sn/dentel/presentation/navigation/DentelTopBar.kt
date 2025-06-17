@@ -37,10 +37,10 @@ fun DentelTopBar(
     title: String = "",
     icon: ImageVector? = null,
     showBackButton: Boolean = false,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
 ) {
     TopAppBar(
-        title = { 
+        title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -51,7 +51,9 @@ fun DentelTopBar(
                         imageVector = it,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                        modifier = Modifier
+                            .size(24.dp)
+                            .padding(end = 8.dp)
                     )
                 }
                 Text(title, color = Color.White)
@@ -87,9 +89,12 @@ fun DentelTopBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = DentelDarkPurple
         ),
-        modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth(),
+        modifier = Modifier
+            .padding(horizontal = 8.dp)
+            .fillMaxWidth(),
     )
 }
+
 
 @Preview(showBackground = true)
 @Composable
@@ -97,4 +102,4 @@ fun DentelTopBarPreview() {
     DentelTheme {
         DentelTopBar(navController = rememberNavController())
     }
-} 
+}

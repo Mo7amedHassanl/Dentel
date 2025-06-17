@@ -2,6 +2,14 @@ package com.m7md7sn.dentel.presentation.ui.section
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +55,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -67,6 +76,7 @@ import com.m7md7sn.dentel.presentation.theme.DentelBrightBlue
 import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.m7md7sn.dentel.presentation.navigation.DentelApp
 import com.m7md7sn.dentel.presentation.ui.section.TopicType
 import com.m7md7sn.dentel.presentation.ui.section.SectionViewModel
 import com.m7md7sn.dentel.presentation.ui.section.Topic
@@ -112,15 +122,16 @@ fun SectionScreen(
             }
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(
-                        state = scrollState
-                    ),
+                    .fillMaxSize(),
+//                    .verticalScroll(
+//                        state = scrollState
+//                    ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 val section = (uiState as? SectionUiState.Success)?.section
                 val searchQuery = (uiState as? SectionUiState.Success)?.searchQuery ?: ""
-                val selectedType = (uiState as? SectionUiState.Success)?.selectedType ?: TopicType.Article
+                val selectedType =
+                    (uiState as? SectionUiState.Success)?.selectedType ?: TopicType.Article
 
                 section?.let {
                     SectionHeader(section = it)
@@ -141,16 +152,17 @@ fun SectionScreen(
                         TopicsOrEmptyMessage(
                             topics = emptyList(), // Show empty list while loading
                             onTopicClick = onTopicClick,
-                            isLoading = true
+                            isLoading = true,
+                            modifier = Modifier.weight(1f)
                         )
                     }
 
                     is SectionUiState.Error -> {
-                    Text(
+                        Text(
                             text = "Error: ${(uiState as SectionUiState.Error).message}",
-                        color = Color.Red,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                            color = Color.Red,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
 
                     is SectionUiState.Success -> {
@@ -159,7 +171,7 @@ fun SectionScreen(
                             topics = successState.topics,
                             onTopicClick = onTopicClick,
                             isLoading = false // Data loaded, no longer loading
-                    )
+                        )
                     }
                 }
             }
@@ -182,42 +194,77 @@ fun TopicsOrEmptyMessage(
     ) {
         Image(
             painter = painterResource(id = R.drawable.section_topic_list_upper_curve),
-            contentDescription = null
+            contentDescription = null,
+            contentScale = ContentScale.FillHeight,
         )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(800.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color.White)
                 .padding(vertical = 16.dp, horizontal = 22.dp),
             contentAlignment = Alignment.TopCenter
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color(0xFF421882))
-            } else if (topics.isEmpty()) {
-                Text(
-                    text = "No topics found for this section.",
-                    color = Color(0xFF421882),
-                    fontFamily = FontFamily(Font(R.font.din_next_lt_regular)),
-                    fontWeight = FontWeight(400),
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else {
-            LazyColumn() {
-                items(topics.size) { idx ->
-                    val topic = topics[idx]
-                    TopicItem(
-                        title = topic.title,
-                        subtitle = topic.subtitle,
-                        type = when (topic.type) {
-                                TopicType.Article -> "article"
-                                TopicType.Video -> "video"
-                        },
-                        onCardClicked = { onTopicClick(topic) }
-                    )
+            AnimatedContent(
+                targetState = Triple(isLoading, topics.isEmpty(), topics),
+                transitionSpec = {
+                    // Get the current and target content types
+                    val initialType = initialState.third.firstOrNull()?.type
+                    val targetType = targetState.third.firstOrNull()?.type
+
+                    // Determine slide direction based on transition between content types
+                    // For Articles -> Videos: slide to the left (negative)
+                    // For Videos -> Articles: slide to the right (positive)
+                    val slideDirection = if (initialType == targetType) {
+                        0 // No direction change if same type
+                    } else if (targetType == TopicType.Video) {
+                        -1 // Sliding left for Articles -> Videos
+                    } else {
+                        1 // Sliding right for Videos -> Articles
+                    }
+
+                    // Create slide and fade animations with the determined direction
+                    (slideInHorizontally(animationSpec = tween(400)) { width -> slideDirection * width } +
+                            fadeIn(animationSpec = tween(400)))
+                        .togetherWith(
+                            slideOutHorizontally(animationSpec = tween(400)) { width -> -slideDirection * width } +
+                                    fadeOut(animationSpec = tween(300))
+                        )
+                },
+                label = "topics_content_animation"
+            ) { (loading, isEmpty, topicsList) ->
+                when {
+                    loading -> {
+                        CircularProgressIndicator(color = Color(0xFF421882))
+                    }
+
+                    isEmpty -> {
+                        Text(
+                            text = "No topics found for this section.",
+                            color = Color(0xFF421882),
+                            fontFamily = FontFamily(Font(R.font.din_next_lt_regular)),
+                            fontWeight = FontWeight(400),
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+
+                    else -> {
+                        LazyColumn() {
+                            items(topicsList.size) { idx ->
+                                val topic = topicsList[idx]
+                                TopicItem(
+                                    title = topic.title,
+                                    subtitle = topic.subtitle,
+                                    type = when (topic.type) {
+                                        TopicType.Article -> "article"
+                                        TopicType.Video -> "video"
+                                    },
+                                    onCardClicked = { onTopicClick(topic) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -236,7 +283,8 @@ fun TopicItem(
 ) {
     Card(
         modifier = modifier
-            .width(332.dp).padding(bottom = 16.dp),
+            .width(332.dp)
+            .padding(bottom = 16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (type == "video") Color(0xFFE1F0FF) else Color(0xFFE5E1FF),
         ),
@@ -246,13 +294,13 @@ fun TopicItem(
             defaultElevation = 2.5.dp
         ),
 
-    ) {
+        ) {
         Box(
             modifier = Modifier
                 .fillMaxSize(),
             contentAlignment = Alignment.Center,
 
-        ) {
+            ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
@@ -358,27 +406,50 @@ fun ContentTypeButton(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = if (clicked) clickedIconRes else iconRes),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
+            // Animate the icon with crossfade effect
+            AnimatedContent(
+                targetState = clicked,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(300)) togetherWith
+                            fadeOut(animationSpec = tween(300))
+                },
+                label = "button_icon_animation"
+            ) { isSelected ->
+                Image(
+                    painter = painterResource(id = if (isSelected) clickedIconRes else iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
                 )
+            }
+
             Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = stringResource(text),
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
-                    fontWeight = FontWeight(400),
-                    color = if (!clicked) Color(0xFF421882) else Color.White,
-                    textAlign = TextAlign.Center,
-                    letterSpacing = 0.38.sp,
+
+            // Animate the text color change
+            AnimatedContent(
+                targetState = clicked,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(300)) togetherWith
+                            fadeOut(animationSpec = tween(300))
+                },
+                label = "button_text_animation"
+            ) { isSelected ->
+                Text(
+                    text = stringResource(text),
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        fontFamily = FontFamily(Font(R.font.din_next_lt_bold)),
+                        fontWeight = FontWeight(400),
+                        color = if (!isSelected) Color(0xFF421882) else Color.White,
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 0.38.sp,
+                    )
                 )
-            )
+            }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -396,7 +467,7 @@ fun SectionSearchBar(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp)
-            .height(64.dp),
+            .height(54.dp),
         placeholder = {
             Text(
                 text = stringResource(R.string.search),
@@ -420,7 +491,12 @@ fun SectionSearchBar(
         shape = RoundedCornerShape(20.dp),
         colors = SearchBarDefaults.colors(
             containerColor = Color.White,
-            dividerColor = Color.Transparent
+            dividerColor = Color.Transparent,
+            inputFieldColors = SearchBarDefaults.inputFieldColors(
+                focusedTextColor = DentelDarkPurple,
+                unfocusedTextColor = DentelDarkPurple,
+                cursorColor = DentelDarkPurple,
+            )
         ),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp
@@ -437,7 +513,7 @@ fun SectionHeader(
 
     Row(
         modifier = modifier
-            .padding(horizontal = 54.dp, vertical = 28.dp)
+            .padding(horizontal = 54.dp, vertical = 8.dp)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
