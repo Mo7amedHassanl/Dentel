@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,7 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -41,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.m7md7sn.dentel.R
 import com.m7md7sn.dentel.data.model.Article
 import com.m7md7sn.dentel.data.model.SuggestedTopic
@@ -81,17 +85,59 @@ fun ArticleScreen(topic: Topic?, modifier: Modifier = Modifier) {
                 color = Color(0xFF444B88),
             )
             Spacer(modifier = Modifier.height(28.dp))
-            // Placeholder for Article Image
-            Image(
-                painter = painterResource(id = R.drawable.article_image),
-                contentDescription = "Article Image Placeholder",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .padding(horizontal = 32.dp)
-            )
+
+            // Use AsyncImage from Coil to load the article image from URL
+            if (topic?.imageUrl != null) {
+                // Create a loading state to track the image loading progress
+                var isLoading by remember { mutableStateOf(true) }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(horizontal = 32.dp)
+                ) {
+                    AsyncImage(
+                        model = topic.imageUrl,
+                        contentDescription = "Article Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp)),
+                        fallback = painterResource(id = R.drawable.ic_article_image_placeholder),
+                        error = painterResource(id = R.drawable.ic_article_image_placeholder),
+                        onLoading = { isLoading = true },
+                        onSuccess = { isLoading = false },
+                        onError = { isLoading = false }
+                    )
+
+                    // Show loading indicator while image is loading
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Gray.copy(alpha = 0.2f))
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Fall back to placeholder if imageUrl is null
+                Image(
+                    painter = painterResource(id = R.drawable.ic_article_image_placeholder),
+                    contentDescription = "Article Image Placeholder",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(horizontal = 32.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.height(28.dp))
-            ArticleContent(subtitle = topic?.subtitle ?: "")
+            ArticleContent(content = topic?.content ?: "")
             Spacer(modifier = Modifier.height(32.dp))
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -121,7 +167,7 @@ fun ArticleScreen(topic: Topic?, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ArticleContent(subtitle: String, modifier: Modifier = Modifier) {
+fun ArticleContent(content: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth(),
@@ -185,8 +231,9 @@ fun ArticleContent(subtitle: String, modifier: Modifier = Modifier) {
                 )
                 .padding(horizontal = 32.dp, vertical = 16.dp)
         ) {
+            // Display the article content instead of subtitle
             Text(
-                text = subtitle,
+                text = content,
                 style = TextStyle(
                     fontSize = 16.sp,
                     lineHeight = 25.sp,
