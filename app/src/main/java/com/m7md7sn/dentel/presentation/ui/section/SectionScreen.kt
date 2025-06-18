@@ -45,6 +45,7 @@ fun SectionScreen(
 ) {
     // Collect UI state
     val uiState by viewModel.uiState.collectAsState()
+    val favoriteTopicIds by viewModel.favoriteTopicIds.collectAsState()
 
     // Set section ID only once
     LaunchedEffect(sectionId) {
@@ -142,6 +143,7 @@ fun SectionScreen(
                         TopicsOrEmptyMessage(
                             topics = successState.topics,
                             onTopicClick = onTopicClick,
+                            favoriteTopicIds = favoriteTopicIds,
                             isLoading = successState.isSearching,
                             modifier = Modifier.weight(1f)
                         )

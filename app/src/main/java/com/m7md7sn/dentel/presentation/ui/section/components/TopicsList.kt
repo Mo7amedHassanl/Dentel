@@ -41,6 +41,7 @@ import androidx.compose.animation.core.tween
 fun TopicsOrEmptyMessage(
     topics: List<Topic>,
     onTopicClick: (Topic) -> Unit,
+    favoriteTopicIds: Set<String> = emptySet(),
     isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -119,7 +120,8 @@ fun TopicsOrEmptyMessage(
                                         TopicType.Article -> "article"
                                         TopicType.Video -> "video"
                                     },
-                                    onCardClicked = { onTopicClick(topic) }
+                                    onCardClicked = { onTopicClick(topic) },
+                                    isFavorite = favoriteTopicIds.contains(topic.id)
                                 )
                             }
                         }

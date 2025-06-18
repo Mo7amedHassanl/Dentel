@@ -4,19 +4,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7md7sn.dentel.data.repository.SectionException
 import com.m7md7sn.dentel.data.repository.SectionRepository
+import com.m7md7sn.dentel.data.repository.FavoritesRepository
+import com.m7md7sn.dentel.data.repository.FavoriteType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
 
 /**
  * ViewModel for the Section screen that handles UI state and user interactions
  */
 @HiltViewModel
 class SectionViewModel @Inject constructor(
-    private val sectionRepository: SectionRepository
+    private val sectionRepository: SectionRepository,
+    private val favoritesRepository: FavoritesRepository
 ) : ViewModel() {
     // UI state exposed to the UI
     private val _uiState = MutableStateFlow<SectionUiState>(SectionUiState.Loading)
@@ -24,6 +31,19 @@ class SectionViewModel @Inject constructor(
 
     // Keep all topics in memory to support filtering
     private var allTopics: List<Topic> = emptyList()
+
+    private val _currentType = MutableStateFlow(TopicType.Article)
+    val currentType: StateFlow<TopicType> = _currentType
+
+    val favoriteTopicIds: StateFlow<Set<String>> = _currentType
+        .flatMapLatest { type ->
+            when (type) {
+                TopicType.Article -> favoritesRepository.getFavoriteArticles()
+                TopicType.Video -> favoritesRepository.getFavoriteVideos()
+            }
+        }
+        .map { items -> items.map { it.id }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     /**
      * Set the current section by its ID and load associated topics
@@ -50,6 +70,7 @@ class SectionViewModel @Inject constructor(
      * Change the selected topic type (Article or Video)
      */
     fun selectType(type: TopicType) {
+        _currentType.value = type
         when (val currentState = _uiState.value) {
             is SectionUiState.Success -> {
                 // Update current state to indicate searching
