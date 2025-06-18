@@ -1,6 +1,6 @@
 package com.m7md7sn.dentel.presentation.ui.favorites
 
-import com.m7md7sn.dentel.data.repository.FavoriteItem
+import com.m7md7sn.dentel.data.model.FavoriteItem
 import com.m7md7sn.dentel.data.repository.FavoriteType
 
 /**

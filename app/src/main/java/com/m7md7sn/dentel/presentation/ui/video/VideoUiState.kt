@@ -5,5 +5,6 @@ import com.m7md7sn.dentel.data.model.Video
 data class VideoUiState(
     val video: Video? = null,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isFavorite: Boolean = false
 )

@@ -135,7 +135,9 @@ fun VideoScreen(
             VideoDescriptionWithLikeAndShareButtons(
                 description = uiState.video?.description ?: topic?.content ?: "",
                 title = uiState.video?.title ?: topic?.title ?: "",
-                videoUrl = uiState.video?.videoUrl ?: topic?.videoUrl ?: ""
+                videoUrl = uiState.video?.videoUrl ?: topic?.videoUrl ?: "",
+                isFavorite = uiState.isFavorite,
+                onLikeClick = { viewModel.toggleFavorite() }
             )
 
             Spacer(modifier = Modifier.height(32.dp))

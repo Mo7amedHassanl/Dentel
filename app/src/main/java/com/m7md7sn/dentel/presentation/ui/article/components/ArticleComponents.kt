@@ -35,7 +35,9 @@ import com.m7md7sn.dentel.presentation.ui.video.components.LikeAndShareButtons
 fun ArticleContent(
     content: String,
     modifier: Modifier = Modifier,
-    title: String = ""
+    title: String = "",
+    isFavorite: Boolean = false,
+    onLikeClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -90,6 +92,8 @@ fun ArticleContent(
                 modifier = Modifier.align(Alignment.Center),
                 title = title,
                 isArticle = true,
+                isFavorite = isFavorite,
+                onLikeClick = onLikeClick
             )
         }
         Box(

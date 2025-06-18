@@ -55,7 +55,9 @@ fun LikeAndShareButtons(
     modifier: Modifier = Modifier,
     title: String = "",
     url: String = "",
-    isArticle: Boolean = false
+    isArticle: Boolean = false,
+    isFavorite: Boolean = false,
+    onLikeClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -65,8 +67,8 @@ fun LikeAndShareButtons(
     ) {
         VideoButton(
             text = R.string.like,
-            onClick = { /* Handle like action */ },
-            icon = Icons.Outlined.FavoriteBorder,
+            onClick = onLikeClick,
+            icon = if (isFavorite) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
             tint = Color(0xFFE63E3E),
         )
         Spacer(modifier = Modifier.width(16.dp))

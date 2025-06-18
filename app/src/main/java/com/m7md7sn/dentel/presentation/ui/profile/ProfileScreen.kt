@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.m7md7sn.dentel.data.model.User
-import com.m7md7sn.dentel.data.repository.FavoriteItem
+import com.m7md7sn.dentel.data.model.FavoriteItem
 import com.m7md7sn.dentel.data.repository.FavoriteType
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
 import com.m7md7sn.dentel.presentation.ui.profile.components.FavoritesList

@@ -35,7 +35,9 @@ fun VideoDescriptionWithLikeAndShareButtons(
     description: String,
     modifier: Modifier = Modifier,
     title: String = "",
-    videoUrl: String = ""
+    videoUrl: String = "",
+    isFavorite: Boolean = false,
+    onLikeClick: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -90,7 +92,9 @@ fun VideoDescriptionWithLikeAndShareButtons(
                 modifier = Modifier.align(Alignment.Center),
                 title = title,
                 url = videoUrl,
-                isArticle = false
+                isArticle = false,
+                isFavorite = isFavorite,
+                onLikeClick = onLikeClick
             )
         }
         Box(

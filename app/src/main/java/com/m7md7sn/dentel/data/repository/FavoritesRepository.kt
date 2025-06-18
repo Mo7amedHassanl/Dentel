@@ -1,11 +1,15 @@
 package com.m7md7sn.dentel.data.repository
 
+import com.google.firebase.firestore.FirebaseFirestore
 import com.m7md7sn.dentel.data.model.Article
 import com.m7md7sn.dentel.data.model.Video
+import com.m7md7sn.dentel.data.model.FavoriteItem
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.tasks.await
 
 /**
  * Repository interface for favorites-related data operations
@@ -31,53 +35,50 @@ interface FavoritesRepository {
  * Implementation of FavoritesRepository interface
  */
 @Singleton
-class FavoritesRepositoryImpl @Inject constructor() : FavoritesRepository {
+class FavoritesRepositoryImpl @Inject constructor(
+    private val db: FirebaseFirestore,
+    private val authRepository: AuthRepository
+) : FavoritesRepository {
+    private fun getUserId(): String? = authRepository.currentUser?.uid
 
-    // In a real app, this would come from a database or remote API
-    // Simulating persistent storage with in-memory lists for demonstration
-    private val favoriteArticles = mutableListOf<FavoriteItem>(
-        FavoriteItem("1", "Teeth Whitening Guide", FavoriteType.ARTICLE),
-        FavoriteItem("2", "Dental Hygiene Tips", FavoriteType.ARTICLE),
-        FavoriteItem("3", "Flossing Techniques", FavoriteType.ARTICLE),
-        FavoriteItem("4", "Foods for Healthy Teeth", FavoriteType.ARTICLE)
-    )
-
-    private val favoriteVideos = mutableListOf<FavoriteItem>(
-        FavoriteItem("5", "Proper Brushing Tutorial", FavoriteType.VIDEO),
-        FavoriteItem("6", "Preventing Gum Disease", FavoriteType.VIDEO),
-        FavoriteItem("7", "Children's Dental Care", FavoriteType.VIDEO)
-    )
-
-    override fun getFavoriteArticles(): Flow<List<FavoriteItem>> = flow {
-        emit(favoriteArticles)
+    override fun getFavoriteArticles(): Flow<List<FavoriteItem>> = callbackFlow {
+        val userId = getUserId() ?: run { trySend(emptyList()); close(); return@callbackFlow }
+        val ref = db.collection("favorites").document(userId).collection("articles")
+        val listener = ref.addSnapshotListener { snapshot, _ ->
+            val items = snapshot?.documents?.mapNotNull { doc ->
+                doc.toObject(FavoriteItem::class.java)?.copy(id = doc.id, type = FavoriteType.ARTICLE)
+            } ?: emptyList()
+            trySend(items)
+        }
+        awaitClose { listener.remove() }
     }
 
-    override fun getFavoriteVideos(): Flow<List<FavoriteItem>> = flow {
-        emit(favoriteVideos)
+    override fun getFavoriteVideos(): Flow<List<FavoriteItem>> = callbackFlow {
+        val userId = getUserId() ?: run { trySend(emptyList()); close(); return@callbackFlow }
+        val ref = db.collection("favorites").document(userId).collection("videos")
+        val listener = ref.addSnapshotListener { snapshot, _ ->
+            val items = snapshot?.documents?.mapNotNull { doc ->
+                doc.toObject(FavoriteItem::class.java)?.copy(id = doc.id, type = FavoriteType.VIDEO)
+            } ?: emptyList()
+            trySend(items)
+        }
+        awaitClose { listener.remove() }
     }
 
     override suspend fun toggleFavorite(item: FavoriteItem): Boolean {
-        return when (item.type) {
-            FavoriteType.ARTICLE -> {
-                val existing = favoriteArticles.find { it.id == item.id }
-                if (existing != null) {
-                    favoriteArticles.remove(existing)
-                    false // No longer a favorite
-                } else {
-                    favoriteArticles.add(item)
-                    true // Is now a favorite
-                }
-            }
-            FavoriteType.VIDEO -> {
-                val existing = favoriteVideos.find { it.id == item.id }
-                if (existing != null) {
-                    favoriteVideos.remove(existing)
-                    false // No longer a favorite
-                } else {
-                    favoriteVideos.add(item)
-                    true // Is now a favorite
-                }
-            }
+        val userId = getUserId() ?: return false
+        val typeStr = when (item.type) {
+            FavoriteType.ARTICLE -> "articles"
+            FavoriteType.VIDEO -> "videos"
+        }
+        val docRef = db.collection("favorites").document(userId).collection(typeStr).document(item.id)
+        val snapshot = docRef.get().await()
+        return if (snapshot.exists()) {
+            docRef.delete().await()
+            false
+        } else {
+            docRef.set(item.copy(type = item.type)).await()
+            true
         }
     }
 }

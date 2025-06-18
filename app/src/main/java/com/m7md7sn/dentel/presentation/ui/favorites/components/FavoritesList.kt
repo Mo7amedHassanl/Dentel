@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.m7md7sn.dentel.R
-import com.m7md7sn.dentel.data.repository.FavoriteItem
+import com.m7md7sn.dentel.data.model.FavoriteItem
 import com.m7md7sn.dentel.data.repository.FavoriteType
 import com.m7md7sn.dentel.presentation.ui.profile.components.FavoriteItem as ProfileFavoriteItem
 

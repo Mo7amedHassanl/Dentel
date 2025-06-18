@@ -104,7 +104,9 @@ fun ArticleScreen(
                 // Article content with like/share buttons
                 ArticleContent(
                     content = uiState.article?.content ?: topic?.content ?: "",
-                    title = uiState.article?.title ?: topic?.title ?: ""
+                    title = uiState.article?.title ?: topic?.title ?: "",
+                    isFavorite = uiState.isFavorite,
+                    onLikeClick = { viewModel.toggleFavorite() }
                 )
             }
 

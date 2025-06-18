@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.callbackFlow
+import com.m7md7sn.dentel.data.model.FavoriteItem
 
 /**
  * Repository interface for profile-related operations
@@ -27,7 +31,8 @@ interface ProfileRepository {
  */
 @Singleton
 class ProfileRepositoryImpl @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val favoritesRepository: FavoritesRepository
 ) : ProfileRepository {
 
     override fun getUserProfile(): Flow<User> = flow {
@@ -43,23 +48,9 @@ class ProfileRepositoryImpl @Inject constructor(
         emit(user)
     }
 
-    override fun getFavoriteItems(type: FavoriteType): Flow<List<FavoriteItem>> {
-        // In a real app, this would fetch favorites from a database or remote source
-        // For now, we'll return dummy data
-        val favorites = when (type) {
-            FavoriteType.ARTICLE -> listOf(
-                FavoriteItem("1", "Teeth Whitening", FavoriteType.ARTICLE),
-                FavoriteItem("2", "Root Canal Treatment", FavoriteType.ARTICLE),
-                FavoriteItem("3", "Dental Implants", FavoriteType.ARTICLE)
-            )
-            FavoriteType.VIDEO -> listOf(
-                FavoriteItem("4", "Brushing Techniques", FavoriteType.VIDEO),
-                FavoriteItem("5", "Flossing Guide", FavoriteType.VIDEO),
-                FavoriteItem("6", "Dental Care Tips", FavoriteType.VIDEO)
-            )
-        }
-
-        return flow { emit(favorites) }
+    override fun getFavoriteItems(type: FavoriteType): Flow<List<FavoriteItem>> = when (type) {
+        FavoriteType.ARTICLE -> favoritesRepository.getFavoriteArticles()
+        FavoriteType.VIDEO -> favoritesRepository.getFavoriteVideos()
     }
 }
 
@@ -70,12 +61,3 @@ enum class FavoriteType {
     ARTICLE,
     VIDEO
 }
-
-/**
- * Data class for favorite items
- */
-data class FavoriteItem(
-    val id: String,
-    val title: String,
-    val type: FavoriteType
-)

@@ -2,7 +2,7 @@ package com.m7md7sn.dentel.presentation.ui.favorites
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.m7md7sn.dentel.data.repository.FavoriteItem
+import com.m7md7sn.dentel.data.model.FavoriteItem
 import com.m7md7sn.dentel.data.repository.FavoriteType
 import com.m7md7sn.dentel.data.repository.FavoritesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
