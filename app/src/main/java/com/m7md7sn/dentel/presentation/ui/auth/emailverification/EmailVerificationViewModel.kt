@@ -15,21 +15,33 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for email verification screen that handles verification logic and state management
+ * Follows MVVM architecture pattern for separation of concerns
+ */
 @HiltViewModel
 class EmailVerificationViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
+    // Private mutable state flow that can only be modified within the ViewModel
     private val _uiState = MutableStateFlow(
         EmailVerificationUiState(
             userEmail = authRepository.currentUser?.email ?: ""
         )
     )
+
+    // Public immutable state flow that can be observed by the UI
     val uiState: StateFlow<EmailVerificationUiState> = _uiState.asStateFlow()
 
+    // One-time events like snackbar messages
     private val _snackbarMessage = MutableSharedFlow<Event<String>>()
     val snackbarMessage: SharedFlow<Event<String>> = _snackbarMessage.asSharedFlow()
 
+    /**
+     * Sends email verification to current user's email address
+     * Updates UI state with loading state and result
+     */
     fun sendEmailVerification() {
         _uiState.value = _uiState.value.copy(isLoading = true, verificationResult = Result.Loading)
         viewModelScope.launch {
@@ -45,6 +57,10 @@ class EmailVerificationViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Checks if the email has been verified by reloading the user
+     * Updates UI state based on verification status
+     */
     fun checkEmailVerificationStatus() {
         _uiState.value = _uiState.value.copy(isLoading = true, verificationResult = Result.Loading)
         viewModelScope.launch {
@@ -64,6 +80,10 @@ class EmailVerificationViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Resets the verification result to null
+     * Used after handling verification success or failure
+     */
     fun resetVerificationResult() {
         _uiState.value = _uiState.value.copy(verificationResult = null)
     }
