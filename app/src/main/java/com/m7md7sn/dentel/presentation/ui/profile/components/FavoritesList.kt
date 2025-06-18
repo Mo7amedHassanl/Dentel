@@ -110,7 +110,8 @@ fun FavoritesList(
                     FavoriteItem(
                         title = item.title,
                         onCardClicked = { onItemClick(item) },
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        type = item.type
                     )
                 }
             }
@@ -124,6 +125,7 @@ fun FavoritesList(
 @Composable
 fun FavoriteItem(
     title: String,
+    type: FavoriteType,
     onCardClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -132,7 +134,7 @@ fun FavoriteItem(
             .width(307.dp)
             .height(83.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE5E1FF),
+            containerColor = if (type == FavoriteType.ARTICLE) Color(0xFFE5E1FF) else Color(0xFFE1F0FF),
         ),
         shape = RoundedCornerShape(20.dp),
         onClick = onCardClicked,

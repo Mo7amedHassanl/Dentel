@@ -34,7 +34,8 @@ import com.m7md7sn.dentel.presentation.ui.profile.components.ShowMoreButton
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
-    onFavoriteItemClick: (FavoriteItem) -> Unit = {}
+    onFavoriteItemClick: (FavoriteItem) -> Unit = {},
+    onNavigateToFavorites: (Int) -> Unit = {} // Updated to pass the type ordinal
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -78,7 +79,10 @@ fun ProfileScreen(
                     isLoadingFavorites = successState.isLoadingFavorites,
                     onFavoriteTypeSelected = viewModel::loadFavorites,
                     onFavoriteItemClick = onFavoriteItemClick,
-                    onShowMoreClick = { /* Handle show more */ }
+                    onShowMoreClick = {
+                        // Pass the type ordinal when navigating to favorites
+                        onNavigateToFavorites(successState.selectedFavoriteType.ordinal)
+                    }
                 )
             }
         }
@@ -107,15 +111,12 @@ private fun ProfileContent(
         // Profile header with user information
         ProfileHeader(user = user)
 
-        Spacer(Modifier.height(16.dp))
 
         // Favorites type selection buttons (Articles/Videos)
         FavoritesButtons(
             selectedType = selectedFavoriteType,
             onFavoriteTypeSelected = onFavoriteTypeSelected
         )
-
-        Spacer(Modifier.height(12.dp))
 
         // List of favorite items
         FavoritesList(

@@ -34,6 +34,7 @@ import com.m7md7sn.dentel.presentation.ui.settings.SettingsScreen
 import com.m7md7sn.dentel.presentation.ui.settings.SettingsViewModel
 import com.m7md7sn.dentel.presentation.navigation.DentelTopBar
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.m7md7sn.dentel.presentation.ui.favorites.FavoritesScreen
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -49,6 +50,7 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object Settings : Screen("settings")
     object Notifications : Screen("notifications")
+    object Favorites : Screen("favorites/{typeOrdinal}") // Modified to receive type ordinal
 }
 
 @Composable
@@ -211,7 +213,14 @@ fun DentelApp() {
                 )
             }
             composable(Screen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(
+                    onNavigateToFavorites = { typeOrdinal ->
+                        navController.navigate("favorites/$typeOrdinal")
+                    },
+                    onFavoriteItemClick = { item ->
+                        // Handle favorite item click if needed
+                    }
+                )
             }
             composable(Screen.Settings.route) {
                 val settingsViewModel: SettingsViewModel = hiltViewModel()
@@ -251,6 +260,16 @@ fun DentelApp() {
                 val topic = navController.previousBackStackEntry?.savedStateHandle?.get<com.m7md7sn.dentel.presentation.ui.section.Topic>("topic")
                 com.m7md7sn.dentel.presentation.ui.article.ArticleScreen(topic = topic)
             }
+            // Add Favorites screen composable
+            composable(Screen.Favorites.route) {
+                val typeOrdinal = navBackStackEntry?.arguments?.getString("typeOrdinal")?.toIntOrNull() ?: 0
+                FavoritesScreen(
+                    selectedTypeOrdinal = typeOrdinal, // Pass the selected type ordinal
+                    onFavoriteClick = { favoriteItem ->
+                        // Handle favorite item click if needed
+                    }
+                )
+            }
         }
     }
-} 
+}

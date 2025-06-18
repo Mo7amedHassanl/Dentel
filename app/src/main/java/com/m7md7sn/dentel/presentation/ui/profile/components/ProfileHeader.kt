@@ -58,7 +58,7 @@ fun ProfileHeader(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp)
+                        .height(170.dp)
                         .background(
                             color = Color(0xFF421882),
                             shape = RoundedCornerShape(
