@@ -38,8 +38,9 @@ import com.m7md7sn.dentel.R
 import com.m7md7sn.dentel.data.model.SuggestedTopic
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
-import com.m7md7sn.dentel.presentation.ui.home.SubtitleWithLogo
-import com.m7md7sn.dentel.presentation.ui.home.SuggestedTopicsList
+import com.m7md7sn.dentel.presentation.ui.home.components.SubtitleWithLogo
+import com.m7md7sn.dentel.presentation.ui.home.components.SuggestedTopicsList
+
 import com.m7md7sn.dentel.presentation.ui.section.Topic
 import com.m7md7sn.dentel.presentation.ui.video.components.ArticleVideoTitle
 import com.m7md7sn.dentel.presentation.ui.video.components.VideoDescriptionWithLikeAndShareButtons

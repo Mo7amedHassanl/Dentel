@@ -2,59 +2,78 @@ package com.m7md7sn.dentel.presentation.ui.home
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
-import com.m7md7sn.dentel.R
-import com.m7md7sn.dentel.data.model.Section
+import androidx.lifecycle.viewModelScope
+import com.m7md7sn.dentel.data.repository.HomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for the Home screen
+ * Follows MVVM architecture pattern for separation of concerns
+ */
 @HiltViewModel
-class HomeViewModel @Inject constructor() : ViewModel() {
+class HomeViewModel @Inject constructor(
+    private val homeRepository: HomeRepository
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
+    // Private mutable state flow that can only be modified within the ViewModel
+    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
+
+    // Public immutable state flow that can be observed by the UI
     val uiState: StateFlow<HomeUiState> = _uiState
 
     init {
-        _uiState.value = HomeUiState(
-            sections = listOf(
-                Section(
-                    id = "regular_filling",
-                    imageRes = R.drawable.ic_regular_filling, // Replace with your actual drawable resource
-                    titleRes = R.string.regular_filling,   // Replace with your actual string resource
-                    color = Color(0xFFA6A4ED) // Example color (light blue)
-                ),
-                Section(
-                    id = "mobile_denture",
-                    imageRes = R.drawable.ic_mobile_denture, // Replace with your actual drawable resource
-                    titleRes = R.string.mobile_denture,     // Replace with your actual string resource
-                    color = Color(0xFF6A89E0) // Example color (light green)
-                ),
-                Section(
-                    id = "nerve_filling",
-                    imageRes = R.drawable.ic_nerve_filling, // Replace with your actual drawable resource
-                    titleRes = R.string.nerve_filling,    // Replace with your actual string resource
-                    color = Color(0xFF43B4DB) // Example color (light red)
-                ),
-                Section(
-                    id = "fixed_denture",
-                    imageRes = R.drawable.ic_fixed_denture, // Replace with your actual drawable resource
-                    titleRes = R.string.fixed_denture,    // Replace with your actual string resource
-                    color = Color(0xFF96CCBC) // Example color (light red)
-                ),
-                Section(
-                    id = "bedo",
-                    imageRes = R.drawable.ic_bedo_teeth, // Replace with your actual drawable resource
-                    titleRes = R.string.bedo,    // Replace with your actual string resource
-                    color = Color(0xFFD37C9C) // Example color (light red)
-                ),
-                Section(
-                    id = "diagnosis",
-                    imageRes = R.drawable.ic_diagnosis, // Replace with your actual drawable resource
-                    titleRes = R.string.diagnosis,    // Replace with your actual string resource
-                    color = Color(0xFFCAAD95) // Example color (light red)
-                ),
-            )
-        )
+        loadHomeData()
     }
-} 
+
+    /**
+     * Loads all required data for the home screen
+     * Combines multiple data streams and handles errors
+     */
+    private fun loadHomeData() {
+        viewModelScope.launch {
+            _uiState.value = HomeUiState.Loading
+
+            // Combine all three data sources into a single flow
+            combine(
+                homeRepository.getSections(),
+                homeRepository.getSuggestedTopics(),
+                homeRepository.getDailyReminder()
+            ) { sections, suggestedTopics, reminder ->
+                HomeUiState.Success(
+                    sections = sections,
+                    suggestedTopics = suggestedTopics,
+                    reminder = reminder
+                )
+            }.catch { error ->
+                // Handle errors but try to show any data we might have
+                val currentState = _uiState.value
+                val partialData = if (currentState is HomeUiState.Success) {
+                    HomeUiState.Error(
+                        message = error.message ?: "Unknown error occurred",
+                        sections = currentState.sections,
+                        suggestedTopics = currentState.suggestedTopics,
+                        reminder = currentState.reminder
+                    )
+                } else {
+                    HomeUiState.Error(message = error.message ?: "Unknown error occurred")
+                }
+                _uiState.value = partialData
+            }.collect { state ->
+                _uiState.value = state
+            }
+        }
+    }
+
+    /**
+     * Reload data when user requests a refresh
+     */
+    fun refreshHomeData() {
+        loadHomeData()
+    }
+}

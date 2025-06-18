@@ -2,6 +2,8 @@ package com.m7md7sn.dentel.di
 
 import com.m7md7sn.dentel.data.repository.ArticleRepository
 import com.m7md7sn.dentel.data.repository.ArticleRepositoryImpl
+import com.m7md7sn.dentel.data.repository.HomeRepository
+import com.m7md7sn.dentel.data.repository.HomeRepositoryImpl
 import com.m7md7sn.dentel.data.repository.ProfileRepository
 import com.m7md7sn.dentel.data.repository.ProfileRepositoryImpl
 import com.m7md7sn.dentel.data.repository.SectionRepository
@@ -41,4 +43,10 @@ abstract class RepositoryModule {
     abstract fun bindProfileRepository(
         profileRepositoryImpl: ProfileRepositoryImpl
     ): ProfileRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHomeRepository(
+        homeRepositoryImpl: HomeRepositoryImpl
+    ): HomeRepository
 }

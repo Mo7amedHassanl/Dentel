@@ -31,8 +31,9 @@ import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
 import com.m7md7sn.dentel.presentation.ui.article.components.ArticleContent
 import com.m7md7sn.dentel.presentation.ui.article.components.ArticleImage
 import com.m7md7sn.dentel.presentation.ui.article.components.ArticleTitle
-import com.m7md7sn.dentel.presentation.ui.home.SubtitleWithLogo
-import com.m7md7sn.dentel.presentation.ui.home.SuggestedTopicsList
+import com.m7md7sn.dentel.presentation.ui.home.components.SubtitleWithLogo
+import com.m7md7sn.dentel.presentation.ui.home.components.SuggestedTopicsList
+
 import com.m7md7sn.dentel.presentation.ui.section.Topic
 
 @Composable
