@@ -2,6 +2,8 @@ package com.m7md7sn.dentel.di
 
 import com.m7md7sn.dentel.data.repository.ArticleRepository
 import com.m7md7sn.dentel.data.repository.ArticleRepositoryImpl
+import com.m7md7sn.dentel.data.repository.ProfileRepository
+import com.m7md7sn.dentel.data.repository.ProfileRepositoryImpl
 import com.m7md7sn.dentel.data.repository.SectionRepository
 import com.m7md7sn.dentel.data.repository.SectionRepositoryImpl
 import com.m7md7sn.dentel.data.repository.VideoRepository
@@ -33,4 +35,10 @@ abstract class RepositoryModule {
     abstract fun bindSectionRepository(
         sectionRepositoryImpl: SectionRepositoryImpl
     ): SectionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProfileRepository(
+        profileRepositoryImpl: ProfileRepositoryImpl
+    ): ProfileRepository
 }

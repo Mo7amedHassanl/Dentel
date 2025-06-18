@@ -44,12 +44,8 @@ import com.m7md7sn.dentel.R
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
-import com.m7md7sn.dentel.presentation.ui.profile.FavoriteItem
-import com.m7md7sn.dentel.presentation.ui.profile.FavoritesButtons
-import com.m7md7sn.dentel.presentation.ui.profile.FavoritesList
-import com.m7md7sn.dentel.presentation.ui.profile.ProfileHeader
-import com.m7md7sn.dentel.presentation.ui.profile.ProfilePictureWithName
-import com.m7md7sn.dentel.presentation.ui.profile.ShowMoreButton
+import com.m7md7sn.dentel.presentation.ui.profile.components.FavoriteItem
+
 
 @Composable
 fun FavoritesScreen(modifier: Modifier = Modifier) {
