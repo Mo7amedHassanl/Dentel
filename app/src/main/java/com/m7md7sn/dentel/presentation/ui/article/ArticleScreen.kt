@@ -1,5 +1,6 @@
 package com.m7md7sn.dentel.presentation.ui.article
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -54,9 +56,6 @@ import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
 import com.m7md7sn.dentel.presentation.ui.home.SubtitleWithLogo
 import com.m7md7sn.dentel.presentation.ui.home.SuggestedTopicsList
-import com.m7md7sn.dentel.presentation.ui.video.VideoDescriptionWithLikeAndShareButtons
-import com.m7md7sn.dentel.presentation.ui.video.ArticleVideoTitle
-import com.m7md7sn.dentel.presentation.ui.video.LikeAndShareButtons
 import androidx.lifecycle.ViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,6 +63,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import com.m7md7sn.dentel.presentation.ui.article.ArticleUiState
 import com.m7md7sn.dentel.presentation.ui.section.Topic
+import com.m7md7sn.dentel.presentation.ui.video.components.LikeAndShareButtons
 
 @Composable
 fun ArticleScreen(topic: Topic?, modifier: Modifier = Modifier) {
@@ -138,7 +138,10 @@ fun ArticleScreen(topic: Topic?, modifier: Modifier = Modifier) {
             }
 
             Spacer(modifier = Modifier.height(28.dp))
-            ArticleContent(content = topic?.content ?: "", title = topic?.title ?: "")
+            ArticleContent(
+                content = topic?.content ?: "",
+                title = topic?.title ?: "",
+            )
             Spacer(modifier = Modifier.height(32.dp))
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -225,7 +228,7 @@ fun ArticleContent(
             LikeAndShareButtons(
                 modifier = Modifier.align(Alignment.Center),
                 title = title,
-                isArticle = true
+                isArticle = true,
             )
         }
         Box(

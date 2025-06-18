@@ -6,5 +6,5 @@ data class Video(
     val subtitle: String = "",
     val videoUrl: String = "",
     val thumbnailUrl: String? = null,
-    val description: String = ""
+    val description: String? = ""
 ) 
