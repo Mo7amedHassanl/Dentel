@@ -7,7 +7,9 @@ import com.m7md7sn.dentel.data.model.Video
 import com.m7md7sn.dentel.data.model.sectionsData
 import com.m7md7sn.dentel.presentation.ui.section.Topic
 import com.m7md7sn.dentel.presentation.ui.section.TopicType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,9 +28,8 @@ class SectionRepositoryImpl @Inject constructor(
         return sectionsData.find { it.id == sectionId }
     }
 
-    override suspend fun getTopicsForSection(sectionId: String): List<Topic> {
+    override suspend fun getTopicsForSection(sectionId: String): List<Topic> = withContext(Dispatchers.IO) {
         val topicsList = mutableListOf<Topic>()
-
         try {
             // Fetch articles
             val articlesSnapshot = db.collection("sections")
@@ -36,7 +37,6 @@ class SectionRepositoryImpl @Inject constructor(
                 .collection("articles")
                 .get()
                 .await()
-
             for (doc in articlesSnapshot) {
                 val article = doc.toObject(Article::class.java).copy(id = doc.id)
                 topicsList.add(
@@ -50,14 +50,12 @@ class SectionRepositoryImpl @Inject constructor(
                     )
                 )
             }
-
             // Fetch videos
             val videosSnapshot = db.collection("sections")
                 .document(sectionId)
                 .collection("videos")
                 .get()
                 .await()
-
             for (doc in videosSnapshot) {
                 val video = doc.toObject(Video::class.java).copy(id = doc.id)
                 topicsList.add(
@@ -72,8 +70,7 @@ class SectionRepositoryImpl @Inject constructor(
                     )
                 )
             }
-
-            return topicsList
+            return@withContext topicsList
         } catch (e: Exception) {
             throw SectionException("Error loading topics: ${e.message}")
         }

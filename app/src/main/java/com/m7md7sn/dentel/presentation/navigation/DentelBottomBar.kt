@@ -10,41 +10,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.m7md7sn.dentel.R
+import com.m7md7sn.dentel.presentation.theme.DentelBrightBlue
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelLightPurple
-import com.m7md7sn.dentel.presentation.theme.DentelBrightBlue
 
 sealed class BottomNavScreen(
     val route: String,
     val icon: Int,
-    val selectedIcon: Int,
+    val selectedColor: Color,
     val contentDescription: String
 ) {
     object Home : BottomNavScreen(
         route = Screen.Home.route,
         icon = R.drawable.ic_home_navigation,
-        selectedIcon = R.drawable.ic_home_navigation_selected,
+        selectedColor = DentelLightPurple,
         contentDescription = "Home"
     )
 
     object Notifications : BottomNavScreen(
         route = Screen.Notifications.route,
         icon = R.drawable.ic_notification_navigation,
-        selectedIcon = R.drawable.ic_notification_navigation_selected,
+        selectedColor = DentelBrightBlue,
         contentDescription = "Notifications"
     )
 
     object Settings : BottomNavScreen(
         route = Screen.Settings.route,
         icon = R.drawable.ic_settings_navigation,
-        selectedIcon = R.drawable.ic_settings_navigation_selected,
+        selectedColor = DentelLightPurple,
         contentDescription = "Settings"
     )
 
     object Profile : BottomNavScreen(
         route = Screen.Profile.route,
         icon = R.drawable.ic_profile_navigation,
-        selectedIcon = R.drawable.ic_profile_navigation_selected,
+        selectedColor = DentelBrightBlue,
         contentDescription = "Profile"
     )
 }
@@ -77,7 +77,7 @@ fun DentelBottomBar(
                     )
                 },
                 colors = androidx.compose.material3.NavigationBarItemDefaults.colors(
-                    indicatorColor = DentelLightPurple,
+                    indicatorColor = item.selectedColor,
                     selectedIconColor = DentelDarkPurple,
                     unselectedIconColor = DentelDarkPurple
                 ),

@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Repository interface for favorites-related data operations
@@ -65,15 +67,15 @@ class FavoritesRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    override suspend fun toggleFavorite(item: FavoriteItem): Boolean {
-        val userId = getUserId() ?: return false
+    override suspend fun toggleFavorite(item: FavoriteItem): Boolean = withContext(Dispatchers.IO) {
+        val userId = getUserId() ?: return@withContext false
         val typeStr = when (item.type) {
             FavoriteType.ARTICLE -> "articles"
             FavoriteType.VIDEO -> "videos"
         }
         val docRef = db.collection("favorites").document(userId).collection(typeStr).document(item.id)
         val snapshot = docRef.get().await()
-        return if (snapshot.exists()) {
+        return@withContext if (snapshot.exists()) {
             docRef.delete().await()
             false
         } else {

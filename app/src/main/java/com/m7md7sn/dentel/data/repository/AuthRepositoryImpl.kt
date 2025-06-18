@@ -8,6 +8,8 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.google.firebase.auth.UserProfileChangeRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
@@ -17,8 +19,8 @@ class AuthRepositoryImpl @Inject constructor(
     override val currentUser: FirebaseUser?
         get() = firebaseAuth.currentUser
 
-    override suspend fun login(email: String, password: String): Result<FirebaseUser> {
-        return try {
+    override suspend fun login(email: String, password: String): Result<FirebaseUser> = withContext(Dispatchers.IO) {
+        try {
             val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
             result.user?.let {
                 Result.Success(it)
@@ -41,8 +43,8 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun signup(email: String, password: String): Result<FirebaseUser> {
-        return try {
+    override suspend fun signup(email: String, password: String): Result<FirebaseUser> = withContext(Dispatchers.IO) {
+        try {
             val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             result.user?.let {
                 Result.Success(it)
@@ -63,8 +65,8 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
-        return try {
+    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             firebaseAuth.sendPasswordResetEmail(email).await()
             Result.Success(Unit)
         } catch (e: Exception) {
@@ -82,8 +84,8 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun reloadUser(): Result<Unit> {
-        return try {
+    override suspend fun reloadUser(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             currentUser?.reload()?.await()
             Result.Success(Unit)
         } catch (e: Exception) {
@@ -95,8 +97,8 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun sendEmailVerification(): Result<Unit> {
-        return try {
+    override suspend fun sendEmailVerification(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             currentUser?.sendEmailVerification()?.await()
             Result.Success(Unit)
         } catch (e: Exception) {
@@ -108,12 +110,12 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun logout() {
+    override suspend fun logout() = withContext(Dispatchers.IO) {
         firebaseAuth.signOut()
     }
 
-    override suspend fun updateUserProfile(displayName: String): Result<Unit> {
-        return try {
+    override suspend fun updateUserProfile(displayName: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             val user = firebaseAuth.currentUser
             if (user != null) {
                 val profileUpdates = UserProfileChangeRequest.Builder()

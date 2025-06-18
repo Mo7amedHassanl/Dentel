@@ -63,27 +63,12 @@ fun VideoScreen(
 
     val window = (LocalView.current.context as ComponentActivity).window
 
-    // Full screen mode for better video viewing
-    SideEffect {
-        WindowCompat.getInsetsController(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.statusBars())
-            hide(WindowInsetsCompat.Type.navigationBars())
-        }
-    }
-
+    // Load video from topic when screen is first displayed
     DisposableEffect(Unit) {
-        // Load video from topic when screen is first displayed
         if (topic != null) {
             viewModel.loadVideoFromTopic(topic)
         }
-
-        onDispose {
-            // Restore system bars when leaving the screen
-            WindowCompat.getInsetsController(window, window.decorView).apply {
-                show(WindowInsetsCompat.Type.statusBars())
-                show(WindowInsetsCompat.Type.navigationBars())
-            }
-        }
+        onDispose { }
     }
 
     // Observe UI state

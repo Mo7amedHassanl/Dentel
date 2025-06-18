@@ -12,6 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +30,14 @@ import com.m7md7sn.dentel.presentation.ui.profile.components.FavoritesList
 import com.m7md7sn.dentel.presentation.ui.profile.components.FavoritesButtons
 import com.m7md7sn.dentel.presentation.ui.profile.components.ProfileHeader
 import com.m7md7sn.dentel.presentation.ui.profile.components.ShowMoreButton
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.setValue
 
 /**
  * Main Profile Screen that displays user information and favorites
@@ -102,6 +114,15 @@ private fun ProfileContent(
     onFavoriteItemClick: (FavoriteItem) -> Unit,
     onShowMoreClick: () -> Unit
 ) {
+    // Remember previous type to determine animation direction
+    var previousType by rememberSaveable { mutableStateOf(selectedFavoriteType) }
+    val slideDirection = when {
+        previousType == selectedFavoriteType -> 0
+        selectedFavoriteType == FavoriteType.VIDEO -> -1 // Slide left for Article -> Video
+        else -> 1 // Slide right for Video -> Article
+    }
+    LaunchedEffect(selectedFavoriteType) { previousType = selectedFavoriteType }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -111,20 +132,30 @@ private fun ProfileContent(
         // Profile header with user information
         ProfileHeader(user = user)
 
-
         // Favorites type selection buttons (Articles/Videos)
         FavoritesButtons(
             selectedType = selectedFavoriteType,
             onFavoriteTypeSelected = onFavoriteTypeSelected
         )
 
-        // List of favorite items
-        FavoritesList(
-            items = favoriteItems,
-            isLoading = isLoadingFavorites,
-            onItemClick = onFavoriteItemClick,
-            modifier = Modifier.weight(1f)
-        )
+        // Animated list of favorite items, animation only on type change
+        AnimatedContent(
+            targetState = selectedFavoriteType,
+            transitionSpec = {
+                (slideInHorizontally(animationSpec = tween(400)) { width -> slideDirection * width } +
+                        fadeIn(animationSpec = tween(400))) togetherWith
+                        (slideOutHorizontally(animationSpec = tween(400)) { width -> -slideDirection * width } +
+                                fadeOut(animationSpec = tween(300)))
+            },
+            label = "favorites_content_animation"
+        ) { _ ->
+            FavoritesList(
+                items = favoriteItems,
+                isLoading = isLoadingFavorites,
+                onItemClick = onFavoriteItemClick,
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         // Show more button at the bottom
         ShowMoreButton(onClick = onShowMoreClick)
