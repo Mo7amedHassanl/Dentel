@@ -14,14 +14,17 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.m7md7sn.dentel.presentation.ui.auth.emailverification.EmailVerificationUiState
 
 @HiltViewModel
 class EmailVerificationViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(EmailVerificationUiState(userEmail = authRepository.currentUser?.email ?: ""))
+    private val _uiState = MutableStateFlow(
+        EmailVerificationUiState(
+            userEmail = authRepository.currentUser?.email ?: ""
+        )
+    )
     val uiState: StateFlow<EmailVerificationUiState> = _uiState.asStateFlow()
 
     private val _snackbarMessage = MutableSharedFlow<Event<String>>()
@@ -64,4 +67,4 @@ class EmailVerificationViewModel @Inject constructor(
     fun resetVerificationResult() {
         _uiState.value = _uiState.value.copy(verificationResult = null)
     }
-} 
+}

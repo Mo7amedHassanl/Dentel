@@ -1,4 +1,4 @@
-package com.m7md7sn.dentel.presentation.ui.auth.viewmodels
+package com.m7md7sn.dentel.presentation.ui.auth.signup
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -134,4 +134,4 @@ class SignupViewModel @Inject constructor(
     fun resetSignupResult() {
         _signupResult.value = null
     }
-} 
+}

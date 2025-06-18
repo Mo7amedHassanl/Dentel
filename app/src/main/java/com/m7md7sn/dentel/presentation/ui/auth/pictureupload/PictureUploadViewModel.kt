@@ -1,4 +1,4 @@
-package com.m7md7sn.dentel.presentation.ui.auth.viewmodels
+package com.m7md7sn.dentel.presentation.ui.auth.pictureupload
 
 import android.content.Context
 import android.net.Uri
@@ -9,6 +9,7 @@ import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.m7md7sn.dentel.utils.Event
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,8 +20,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.m7md7sn.dentel.presentation.ui.auth.pictureupload.PictureUploadUiState
-import com.m7md7sn.dentel.utils.Event
 
 @HiltViewModel
 class PictureUploadViewModel @Inject constructor(
@@ -28,7 +27,8 @@ class PictureUploadViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PictureUploadUiState(userName = auth.currentUser?.displayName))
+    private val _uiState =
+        MutableStateFlow(PictureUploadUiState(userName = auth.currentUser?.displayName))
     val uiState: StateFlow<PictureUploadUiState> = _uiState.asStateFlow()
 
     private val _snackbarMessage = MutableSharedFlow<Event<String>>()
@@ -75,9 +75,18 @@ class PictureUploadViewModel @Inject constructor(
                                         ?.addOnCompleteListener { task ->
                                             if (task.isSuccessful) {
                                                 _uiState.value = _uiState.value.copy(uploadSuccess = true, isUploading = false)
-                                                viewModelScope.launch { _snackbarMessage.emit(Event("Profile picture uploaded successfully!")) }
+                                                viewModelScope.launch { _snackbarMessage.emit(
+                                                    Event(
+                                                        "Profile picture uploaded successfully!"
+                                                    )
+                                                ) }
                                             } else {
-                                                viewModelScope.launch { _snackbarMessage.emit(Event(task.exception?.localizedMessage ?: "Failed to update profile.")) }
+                                                viewModelScope.launch { _snackbarMessage.emit(
+                                                    Event(
+                                                        task.exception?.localizedMessage
+                                                            ?: "Failed to update profile."
+                                                    )
+                                                ) }
                                                 _uiState.value = _uiState.value.copy(isUploading = false)
                                             }
                                         }
@@ -88,7 +97,11 @@ class PictureUploadViewModel @Inject constructor(
                             }
 
                             override fun onError(requestId: String, error: ErrorInfo?) {
-                                viewModelScope.launch { _snackbarMessage.emit(Event(error?.description ?: "Cloudinary upload failed.")) }
+                                viewModelScope.launch { _snackbarMessage.emit(
+                                    Event(
+                                        error?.description ?: "Cloudinary upload failed."
+                                    )
+                                ) }
                                 _uiState.value = _uiState.value.copy(isUploading = false)
                             }
 
@@ -99,7 +112,11 @@ class PictureUploadViewModel @Inject constructor(
                         .dispatch()
 
                 } catch (e: Exception) {
-                    viewModelScope.launch { _snackbarMessage.emit(Event(e.localizedMessage ?: "An unexpected error occurred.")) }
+                    viewModelScope.launch { _snackbarMessage.emit(
+                        Event(
+                            e.localizedMessage ?: "An unexpected error occurred."
+                        )
+                    ) }
                     _uiState.value = _uiState.value.copy(isUploading = false)
                 }
             }

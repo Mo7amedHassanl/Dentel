@@ -51,7 +51,7 @@ import com.m7md7sn.dentel.presentation.common.components.CommonLargeButton
 import com.m7md7sn.dentel.presentation.common.components.FullDentelHeader
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
-import com.m7md7sn.dentel.presentation.ui.auth.viewmodels.PictureUploadViewModel
+import com.m7md7sn.dentel.presentation.ui.auth.pictureupload.PictureUploadViewModel
 
 @Composable
 fun PictureUploadScreen(

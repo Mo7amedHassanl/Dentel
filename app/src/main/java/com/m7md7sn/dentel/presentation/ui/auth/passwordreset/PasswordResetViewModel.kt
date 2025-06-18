@@ -1,20 +1,19 @@
-package com.m7md7sn.dentel.presentation.ui.auth.viewmodels
+package com.m7md7sn.dentel.presentation.ui.auth.passwordreset
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7md7sn.dentel.data.repository.AuthRepository
-import com.m7md7sn.dentel.utils.Result
 import com.m7md7sn.dentel.utils.Event
+import com.m7md7sn.dentel.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.m7md7sn.dentel.presentation.ui.auth.passwordreset.PasswordResetUiState
 
 @HiltViewModel
 class PasswordResetViewModel @Inject constructor(
@@ -55,4 +54,4 @@ class PasswordResetViewModel @Inject constructor(
     fun resetPasswordResetResult() {
         _uiState.value = _uiState.value.copy(passwordResetResult = null)
     }
-} 
+}

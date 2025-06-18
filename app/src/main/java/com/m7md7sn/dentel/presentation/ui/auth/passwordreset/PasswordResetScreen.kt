@@ -45,7 +45,7 @@ import com.m7md7sn.dentel.presentation.common.components.CommonTextField
 import com.m7md7sn.dentel.presentation.common.components.FullDentelHeader
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
-import com.m7md7sn.dentel.presentation.ui.auth.viewmodels.PasswordResetViewModel
+import com.m7md7sn.dentel.presentation.ui.auth.passwordreset.PasswordResetViewModel
 import com.m7md7sn.dentel.utils.Result
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

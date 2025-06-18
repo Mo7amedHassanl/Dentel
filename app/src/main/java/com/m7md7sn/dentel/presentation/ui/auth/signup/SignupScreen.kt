@@ -52,17 +52,12 @@ import com.m7md7sn.dentel.presentation.common.components.FullDentelHeader
 import com.m7md7sn.dentel.presentation.common.components.MinimizedDentelHeader
 import com.m7md7sn.dentel.presentation.theme.DentelDarkPurple
 import com.m7md7sn.dentel.presentation.theme.DentelTheme
-import com.m7md7sn.dentel.presentation.ui.auth.login.FacebookGoogleLoginButtons
-import com.m7md7sn.dentel.presentation.ui.auth.login.ForgetPasswordTextButton
-import com.m7md7sn.dentel.presentation.ui.auth.login.LoginScreen
-import com.m7md7sn.dentel.presentation.ui.auth.login.LoginScreenContent
-import com.m7md7sn.dentel.presentation.ui.auth.login.LoginTextFields
-import com.m7md7sn.dentel.presentation.ui.auth.viewmodels.SignupViewModel
 import com.m7md7sn.dentel.utils.Result
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import com.m7md7sn.dentel.presentation.ui.auth.login.components.SocialLoginButtons
 
 @Composable
 fun SignUpScreen(
@@ -215,7 +210,7 @@ fun SignUpScreenContent(
                 isLoading = isLoading
             )
             Spacer(Modifier.height(28.dp))
-            FacebookGoogleLoginButtons()
+            SocialLoginButtons()
             Spacer(Modifier.height(22.dp))
             Text(
                 text = stringResource(R.string.have_account),
