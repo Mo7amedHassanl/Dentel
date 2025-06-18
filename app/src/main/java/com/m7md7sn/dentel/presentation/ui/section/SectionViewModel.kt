@@ -2,185 +2,251 @@ package com.m7md7sn.dentel.presentation.ui.section
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.FirebaseFirestore
-import com.m7md7sn.dentel.data.model.Section
-import com.m7md7sn.dentel.data.model.Video
-import com.m7md7sn.dentel.data.model.Article
+import com.m7md7sn.dentel.data.repository.SectionException
+import com.m7md7sn.dentel.data.repository.SectionRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.m7md7sn.dentel.presentation.ui.section.Topic
-import com.m7md7sn.dentel.presentation.ui.section.TopicType
-import com.m7md7sn.dentel.presentation.ui.section.SectionUiState
-import androidx.compose.ui.graphics.Color
-import com.m7md7sn.dentel.R
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
+/**
+ * ViewModel for the Section screen that handles UI state and user interactions
+ */
 @HiltViewModel
 class SectionViewModel @Inject constructor(
-    private val db: FirebaseFirestore // Injected Firestore instance
+    private val sectionRepository: SectionRepository
 ) : ViewModel() {
+    // UI state exposed to the UI
     private val _uiState = MutableStateFlow<SectionUiState>(SectionUiState.Loading)
     val uiState: StateFlow<SectionUiState> = _uiState
 
+    // Keep all topics in memory to support filtering
     private var allTopics: List<Topic> = emptyList()
 
-    private val allSections = listOf(
-        Section(
-            id = "regular_filling",
-            imageRes = R.drawable.ic_regular_filling,
-            titleRes = R.string.regular_filling,
-            color = Color(0xFFA6A4ED)
-        ),
-        Section(
-            id = "mobile_denture",
-            imageRes = R.drawable.ic_mobile_denture,
-            titleRes = R.string.mobile_denture,
-            color = Color(0xFF6A89E0)
-        ),
-        Section(
-            id = "nerve_filling",
-            imageRes = R.drawable.ic_nerve_filling,
-            titleRes = R.string.nerve_filling,
-            color = Color(0xFF43B4DB)
-        ),
-        Section(
-            id = "fixed_denture",
-            imageRes = R.drawable.ic_fixed_denture,
-            titleRes = R.string.fixed_denture,
-            color = Color(0xFF96CCBC)
-        ),
-        Section(
-            id = "bedo",
-            imageRes = R.drawable.ic_bedo_teeth,
-            titleRes = R.string.bedo,
-            color = Color(0xFFD37C9C)
-        ),
-        Section(
-            id = "diagnosis",
-            imageRes = R.drawable.ic_diagnosis,
-            titleRes = R.string.diagnosis,
-            color = Color(0xFFCAAD95)
-        ),
-    )
-
-    fun setSection(section: Section) {
-        _uiState.update {
-            if (it is SectionUiState.Success) {
-                it.copy(section = section)
-            } else {
-                SectionUiState.Success(section = section) // Default to success with the new section
-            }
-        }
-        loadTopics(section.id)
-    }
-
+    /**
+     * Set the current section by its ID and load associated topics
+     */
     fun setSectionById(sectionId: String) {
-        val section = allSections.find { it.id == sectionId }
-        if (section != null) {
-            _uiState.value = SectionUiState.Loading
-            loadTopics(section.id)
-        } else {
-            _uiState.value = SectionUiState.Error("Section not found")
-        }
-    }
-
-    fun selectType(type: TopicType) {
-        _uiState.update {
-            if (it is SectionUiState.Success) {
-                it.copy(selectedType = type)
-            } else {
-                it // Do not change state if not in Success
+        _uiState.value = SectionUiState.Loading
+        viewModelScope.launch {
+            try {
+                // Get section by ID
+                val section = sectionRepository.getSectionById(sectionId)
+                if (section != null) {
+                    // Load topics for this section
+                    loadTopics(sectionId)
+                } else {
+                    _uiState.value = SectionUiState.Error("Section not found")
+                }
+            } catch (e: Exception) {
+                _uiState.value = SectionUiState.Error("Failed to load section: ${e.message}")
             }
         }
-        if (_uiState.value is SectionUiState.Success) {
-            filterAndUpdateTopics(type = type, query = (_uiState.value as SectionUiState.Success).searchQuery)
-        }
     }
 
-    private fun loadTopics(sectionId: String) {
-        viewModelScope.launch {
-            _uiState.value = SectionUiState.Loading
-            try {
-            val topicsList = mutableListOf<Topic>()
-
-                val articlesSnapshot = db.collection("sections").document(sectionId).collection("articles").get().await()
-                for (doc in articlesSnapshot) {
-                        val article = doc.toObject(Article::class.java).copy(id = doc.id)
-                        topicsList.add(
-                            Topic(
-                                id = article.id,
-                                title = article.title,
-                                subtitle = article.subtitle,
-                                type = TopicType.Article,
-                                content = article.content,
-                                imageUrl = article.imageUrl
-                            )
-                        )
-                    }
-
-                val videosSnapshot = db.collection("sections").document(sectionId).collection("videos").get().await()
-                for (doc in videosSnapshot) {
-                                val video = doc.toObject(Video::class.java).copy(id = doc.id)
-                                topicsList.add(
-                                    Topic(
-                                        id = video.id,
-                                        title = video.title,
-                                        subtitle = video.subtitle,
-                                        type = TopicType.Video,
-                                        videoUrl = video.videoUrl,
-                            thumbnailUrl = video.thumbnailUrl,
-                            content = video.description
-                                    )
-                                )
-                            }
-                            allTopics = topicsList
-                _uiState.update { currentState ->
-                    SectionUiState.Success(
-                        section = if (currentState is SectionUiState.Success) currentState.section else allSections.find { it.id == sectionId },
-                        topics = filterTopics(
-                            (currentState as? SectionUiState.Success)?.selectedType ?: TopicType.Article,
-                            (currentState as? SectionUiState.Success)?.searchQuery ?: ""
-                        ),
-                        selectedType = (currentState as? SectionUiState.Success)?.selectedType ?: TopicType.Article,
-                        searchQuery = (currentState as? SectionUiState.Success)?.searchQuery ?: ""
+    /**
+     * Change the selected topic type (Article or Video)
+     */
+    fun selectType(type: TopicType) {
+        when (val currentState = _uiState.value) {
+            is SectionUiState.Success -> {
+                // Update current state to indicate searching
+                _uiState.update {
+                    (it as SectionUiState.Success).copy(
+                        selectedType = type,
+                        isSearching = true
                     )
                 }
+
+                // Filter topics and determine if we need Success or Empty state
+                val filteredTopics = sectionRepository.filterTopics(
+                    allTopics,
+                    type,
+                    currentState.searchQuery
+                )
+
+                if (filteredTopics.isEmpty()) {
+                    _uiState.value = SectionUiState.Empty(
+                        section = currentState.section,
+                        selectedType = type,
+                        searchQuery = currentState.searchQuery
+                    )
+                } else {
+                    _uiState.value = SectionUiState.Success(
+                        section = currentState.section,
+                        selectedType = type,
+                        topics = filteredTopics,
+                        searchQuery = currentState.searchQuery,
+                        isSearching = false
+                    )
+                }
+            }
+
+            is SectionUiState.Empty -> {
+                // If we're in Empty state, try filtering with the new type
+                val filteredTopics = sectionRepository.filterTopics(
+                    allTopics,
+                    type,
+                    currentState.searchQuery
+                )
+
+                if (filteredTopics.isEmpty()) {
+                    _uiState.update {
+                        (it as SectionUiState.Empty).copy(selectedType = type)
+                    }
+                } else {
+                    _uiState.value = SectionUiState.Success(
+                        section = currentState.section,
+                        selectedType = type,
+                        topics = filteredTopics,
+                        searchQuery = currentState.searchQuery
+                    )
+                }
+            }
+
+            is SectionUiState.Error -> {
+                // Update type even in error state to maintain state consistency
+                _uiState.update {
+                    (it as SectionUiState.Error).copy(selectedType = type)
+                }
+            }
+
+            else -> {} // Do nothing for Loading state
+        }
+    }
+
+    /**
+     * Load topics for a section from the repository
+     */
+    private fun loadTopics(sectionId: String) {
+        viewModelScope.launch {
+            try {
+                // Get section by ID (again, to ensure we have it)
+                val section = sectionRepository.getSectionById(sectionId)
+
+                // Fetch all topics for this section
+                allTopics = sectionRepository.getTopicsForSection(sectionId)
+
+                // Get state values from current state if possible
+                val currentState = _uiState.value
+                val selectedType = when (currentState) {
+                    is SectionUiState.Success -> currentState.selectedType
+                    is SectionUiState.Empty -> currentState.selectedType
+                    is SectionUiState.Error -> currentState.selectedType
+                    else -> TopicType.Article
+                }
+
+                val searchQuery = when (currentState) {
+                    is SectionUiState.Success -> currentState.searchQuery
+                    is SectionUiState.Empty -> currentState.searchQuery
+                    is SectionUiState.Error -> currentState.searchQuery
+                    else -> ""
+                }
+
+                // Filter topics based on current preferences
+                val filteredTopics = sectionRepository.filterTopics(
+                    allTopics,
+                    selectedType,
+                    searchQuery
+                )
+
+                // Set state based on whether we have results
+                if (filteredTopics.isEmpty()) {
+                    _uiState.value = SectionUiState.Empty(
+                        section = section,
+                        selectedType = selectedType,
+                        searchQuery = searchQuery
+                    )
+                } else {
+                    _uiState.value = SectionUiState.Success(
+                        section = section,
+                        topics = filteredTopics,
+                        selectedType = selectedType,
+                        searchQuery = searchQuery
+                    )
+                }
+            } catch (e: SectionException) {
+                _uiState.value = SectionUiState.Error(e.message ?: "Unknown error")
             } catch (e: Exception) {
                 _uiState.value = SectionUiState.Error("Failed to load topics: ${e.message}")
             }
         }
     }
 
-    private fun filterTopics(type: TopicType, query: String): List<Topic> {
-        return allTopics.filter { t ->
-            t.type == type && (query.isBlank() || t.title.contains(query, ignoreCase = true) || t.subtitle.contains(query, ignoreCase = true))
-        }
-    }
-
-    private fun filterAndUpdateTopics(type: TopicType, query: String) {
-        _uiState.update {
-            if (it is SectionUiState.Success) {
-                it.copy(topics = filterTopics(type, query))
-            } else {
-                it // Do not change state if not in Success
-            }
-        }
-    }
-
+    /**
+     * Handle search query changes
+     */
     fun onSearchQueryChange(query: String) {
-        _uiState.update { currentState ->
-            if (currentState is SectionUiState.Success) {
-                currentState.copy(searchQuery = query)
-            } else {
-                currentState // Do not change state if not in Success
+        // Update query in current state
+        when (val currentState = _uiState.value) {
+            is SectionUiState.Success -> {
+                // First update the UI to show we're searching
+                _uiState.update {
+                    (it as SectionUiState.Success).copy(
+                        searchQuery = query,
+                        isSearching = true
+                    )
+                }
+
+                // Filter with new query
+                val filteredTopics = sectionRepository.filterTopics(
+                    allTopics,
+                    currentState.selectedType,
+                    query
+                )
+
+                // Set state based on results
+                if (filteredTopics.isEmpty()) {
+                    _uiState.value = SectionUiState.Empty(
+                        section = currentState.section,
+                        selectedType = currentState.selectedType,
+                        searchQuery = query
+                    )
+                } else {
+                    _uiState.value = SectionUiState.Success(
+                        section = currentState.section,
+                        selectedType = currentState.selectedType,
+                        topics = filteredTopics,
+                        searchQuery = query,
+                        isSearching = false
+                    )
+                }
             }
-        }
-        if (_uiState.value is SectionUiState.Success) {
-            filterAndUpdateTopics(type = (_uiState.value as SectionUiState.Success).selectedType, query = query)
+
+            is SectionUiState.Empty -> {
+                // Try filtering with new query from Empty state
+                val filteredTopics = sectionRepository.filterTopics(
+                    allTopics,
+                    currentState.selectedType,
+                    query
+                )
+
+                if (filteredTopics.isEmpty()) {
+                    // Still empty, just update query
+                    _uiState.update {
+                        (it as SectionUiState.Empty).copy(searchQuery = query)
+                    }
+                } else {
+                    // Found results, switch to Success
+                    _uiState.value = SectionUiState.Success(
+                        section = currentState.section,
+                        selectedType = currentState.selectedType,
+                        topics = filteredTopics,
+                        searchQuery = query
+                    )
+                }
+            }
+
+            is SectionUiState.Error -> {
+                // Update query even in error state
+                _uiState.update {
+                    (it as SectionUiState.Error).copy(searchQuery = query)
+                }
+            }
+
+            else -> {} // Do nothing for Loading state
         }
     }
-} 
+}
