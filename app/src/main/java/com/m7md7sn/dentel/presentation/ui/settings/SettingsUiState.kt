@@ -10,6 +10,10 @@ import androidx.compose.material.icons.outlined.SupportAgent
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m7md7sn.dentel.R
 
+/**
+ * Sealed class representing the different settings content sections
+ * Each object represents a specific settings screen with its title and icon
+ */
 sealed class SettingsContent(
     @StringRes val titleResId: Int,
     val icon: ImageVector?
@@ -20,8 +24,20 @@ sealed class SettingsContent(
     object Support : SettingsContent(R.string.support, Icons.Outlined.SupportAgent)
 }
 
+/**
+ * Data class representing the UI state for the Settings screen
+ * Following the unidirectional data flow pattern with immutable state
+ */
 data class SettingsUiState(
+    // Authentication state
     val isLoggedOut: Boolean = false,
-    val currentContent: SettingsContent? = null
-)
 
+    // Content navigation state
+    val currentContent: SettingsContent? = null,
+
+    // Loading state
+    val isLoading: Boolean = false,
+
+    // Error handling
+    val errorMessage: String? = null
+)
