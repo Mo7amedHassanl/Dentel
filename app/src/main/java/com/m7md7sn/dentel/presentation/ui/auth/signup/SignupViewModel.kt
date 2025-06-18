@@ -1,137 +1,147 @@
 package com.m7md7sn.dentel.presentation.ui.auth.signup
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
 import com.m7md7sn.dentel.data.repository.AuthRepository
+import com.m7md7sn.dentel.utils.Event
 import com.m7md7sn.dentel.utils.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for signup screen that handles registration logic and state management
+ * Follows MVVM architecture pattern for separation of concerns
+ */
 @HiltViewModel
 class SignupViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    var email by mutableStateOf("")
-        private set
+    // Private mutable state flow that can only be modified within the ViewModel
+    private val _uiState = MutableStateFlow(SignUpUiState())
 
-    var username by mutableStateOf("")
-        private set
+    // Public immutable state flow that can be observed by the UI
+    val uiState: StateFlow<SignUpUiState> = _uiState.asStateFlow()
 
-    var password by mutableStateOf("")
-        private set
+    // One-time events like snackbar messages
+    private val _snackbarMessage = MutableSharedFlow<Event<String>>()
+    val snackbarMessage: SharedFlow<Event<String>> = _snackbarMessage.asSharedFlow()
 
-    var confirmPassword by mutableStateOf("")
-        private set
-
-    var emailError by mutableStateOf<String?>(null)
-        private set
-
-    var passwordError by mutableStateOf<String?>(null)
-        private set
-
-    var confirmPasswordError by mutableStateOf<String?>(null)
-        private set
-
-    var usernameError by mutableStateOf<String?>(null)
-        private set
-
-    var isPasswordVisible by mutableStateOf(false)
-        private set
-
-    var isConfirmPasswordVisible by mutableStateOf(false)
-        private set
-
-    private val _signupResult = MutableStateFlow<Result<FirebaseUser>?>(null)
-    val signupResult: StateFlow<Result<FirebaseUser>?> = _signupResult.asStateFlow()
-
+    /**
+     * Updates the email field and clears any previous error
+     */
     fun onEmailChange(newValue: String) {
-        email = newValue
-        emailError = null
+        _uiState.value = _uiState.value.copy(email = newValue, emailError = null)
     }
 
+    /**
+     * Updates the username field and clears any previous error
+     */
     fun onUsernameChange(newValue: String) {
-        username = newValue
-        usernameError = null
+        _uiState.value = _uiState.value.copy(username = newValue, usernameError = null)
     }
 
+    /**
+     * Updates the password field and clears any previous error
+     */
     fun onPasswordChange(newValue: String) {
-        password = newValue
-        passwordError = null
+        _uiState.value = _uiState.value.copy(password = newValue, passwordError = null)
     }
 
+    /**
+     * Updates the confirm password field and clears any previous error
+     */
     fun onConfirmPasswordChange(newValue: String) {
-        confirmPassword = newValue
-        confirmPasswordError = null
+        _uiState.value = _uiState.value.copy(confirmPassword = newValue, confirmPasswordError = null)
     }
 
+    /**
+     * Toggles password visibility between visible and hidden
+     */
     fun togglePasswordVisibility() {
-        isPasswordVisible = !isPasswordVisible
+        _uiState.value = _uiState.value.copy(isPasswordVisible = !_uiState.value.isPasswordVisible)
     }
 
+    /**
+     * Toggles confirm password visibility between visible and hidden
+     */
     fun toggleConfirmPasswordVisibility() {
-        isConfirmPasswordVisible = !isConfirmPasswordVisible
+        _uiState.value = _uiState.value.copy(isConfirmPasswordVisible = !_uiState.value.isConfirmPasswordVisible)
     }
 
+    /**
+     * Attempts to register the user with the provided credentials
+     * Validates inputs and updates UI state accordingly
+     */
     fun signup() {
+        val currentState = _uiState.value
+
         // Basic validation
-        if (username.isBlank()) {
-            usernameError = "Username cannot be empty"
+        if (currentState.username.isBlank()) {
+            _uiState.value = currentState.copy(usernameError = "Username cannot be empty")
             return
         }
-        if (email.isBlank()) {
-            emailError = "Email cannot be empty"
+        if (currentState.email.isBlank()) {
+            _uiState.value = currentState.copy(emailError = "Email cannot be empty")
             return
         }
-        if (password.isBlank()) {
-            passwordError = "Password cannot be empty"
+        if (currentState.password.isBlank()) {
+            _uiState.value = currentState.copy(passwordError = "Password cannot be empty")
             return
         }
-        if (password.length < 6) {
-            passwordError = "Password must be at least 6 characters long"
+        if (currentState.password.length < 6) {
+            _uiState.value = currentState.copy(passwordError = "Password must be at least 6 characters long")
             return
         }
-        if (confirmPassword.isBlank()) {
-            confirmPasswordError = "Confirm Password cannot be empty"
+        if (currentState.confirmPassword.isBlank()) {
+            _uiState.value = currentState.copy(confirmPasswordError = "Confirm Password cannot be empty")
             return
         }
-        if (password != confirmPassword) {
-            passwordError = "Passwords do not match"
-            confirmPasswordError = "Passwords do not match"
+        if (currentState.password != currentState.confirmPassword) {
+            _uiState.value = currentState.copy(
+                passwordError = "Passwords do not match",
+                confirmPasswordError = "Passwords do not match"
+            )
             return
         }
 
-        _signupResult.value = Result.Loading
+        // Show loading state and attempt signup
+        _uiState.value = currentState.copy(isLoading = true, signupResult = Result.Loading)
         viewModelScope.launch {
-            val result = authRepository.signup(email, password)
+            val result = authRepository.signup(currentState.email, currentState.password)
             if (result is Result.Success) {
                 // Update user profile with display name
-                val updateProfileResult = authRepository.updateUserProfile(username)
+                val updateProfileResult = authRepository.updateUserProfile(currentState.username)
                 if (updateProfileResult is Result.Success) {
-                    _signupResult.value = result // Keep the original signup success result
+                    _uiState.value = _uiState.value.copy(isLoading = false, signupResult = result)
                 } else if (updateProfileResult is Result.Error) {
-                    _signupResult.value = Result.Error(
-                        updateProfileResult.message + " but signup was successful.",
-                        updateProfileResult.throwable
+                    val message = updateProfileResult.message + " but signup was successful."
+                    _snackbarMessage.emit(Event(message))
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        signupResult = Result.Error(message, updateProfileResult.throwable)
                     )
-                } else {
-                    _signupResult.value = result // Fallback if updateProfileResult is Loading
                 }
-            } else {
-                _signupResult.value = result
+            } else if (result is Result.Error) {
+                _snackbarMessage.emit(Event(result.message))
+                _uiState.value = _uiState.value.copy(isLoading = false, signupResult = result)
             }
         }
     }
 
+    /**
+     * Resets the signup result to null
+     * Used after handling signup success or failure
+     */
     fun resetSignupResult() {
-        _signupResult.value = null
+        _uiState.value = _uiState.value.copy(signupResult = null)
     }
 }
