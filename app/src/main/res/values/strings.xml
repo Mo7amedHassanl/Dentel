@@ -51,4 +51,5 @@
    <string name="language">Application Language</string>
    <string name="support">Support</string>
    <string name="logout">Logout</string>
+    <string name="dont_have_notifications">You have no notifications</string>
 </resources>

@@ -38,6 +38,7 @@ fun DentelTopBar(
     icon: ImageVector? = null,
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
 ) {
     TopAppBar(
         title = {
@@ -79,7 +80,7 @@ fun DentelTopBar(
             }
         },
         actions = {
-            IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
+            IconButton(onClick = { onNotificationClick() }) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_notification_topbar),
                     contentDescription = "Notifications",

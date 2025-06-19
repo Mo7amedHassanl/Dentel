@@ -28,7 +28,7 @@ sealed class BottomNavScreen(
     )
 
     object Notifications : BottomNavScreen(
-        route = Screen.Notifications.route,
+        route = "notifications_dialog",
         icon = R.drawable.ic_notification_navigation,
         selectedColor = DentelBrightBlue,
         contentDescription = "Notifications"

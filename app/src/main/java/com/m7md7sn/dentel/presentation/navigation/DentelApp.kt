@@ -35,6 +35,7 @@ import com.m7md7sn.dentel.presentation.ui.settings.SettingsViewModel
 import com.m7md7sn.dentel.presentation.navigation.DentelTopBar
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m7md7sn.dentel.presentation.ui.favorites.FavoritesScreen
+import com.m7md7sn.dentel.presentation.ui.notifications.NotificationsDialog
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -49,8 +50,7 @@ sealed class Screen(val route: String) {
     object Article : Screen("article")
     object Profile : Screen("profile")
     object Settings : Screen("settings")
-    object Notifications : Screen("notifications")
-    object Favorites : Screen("favorites/{typeOrdinal}") // Modified to receive type ordinal
+    object Favorites : Screen("favorites/{typeOrdinal}")
 }
 
 @Composable
@@ -59,8 +59,13 @@ fun DentelApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Simplified state for notifications dialog - just track visibility
+    val (showNotificationsDialog, setShowNotificationsDialog) = androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(false)
+    }
+
     val showBottomBar = when (currentRoute) {
-        Screen.Home.route, Screen.Profile.route, Screen.Settings.route, Screen.Notifications.route  -> true
+        Screen.Home.route, Screen.Profile.route, Screen.Settings.route -> true
         else -> false
     }
 
@@ -68,7 +73,9 @@ fun DentelApp() {
     val settingsUiState by settingsViewModel.uiState.collectAsState()
 
     val topBarTitle: String = when (currentRoute) {
-        Screen.Settings.route -> settingsUiState.currentContent?.let { stringResource(id = it.titleResId) } ?: stringResource(id = R.string.settings)
+        Screen.Settings.route -> settingsUiState.currentContent?.let { stringResource(id = it.titleResId) }
+            ?: stringResource(id = R.string.settings)
+
         else -> ""
     }
 
@@ -84,9 +91,17 @@ fun DentelApp() {
     }
 
     val topBarOnBackClick: () -> Unit = when (currentRoute) {
-        Screen.Settings.route -> { { settingsViewModel.clearSettingsContent() } }
-        Screen.Splash.route, Screen.Login.route, Screen.SignUp.route, Screen.EmailVerification.route, Screen.PasswordReset.route, Screen.PictureUpload.route -> { {} }
-        else -> { { navController.popBackStack() } }
+        Screen.Settings.route -> {
+            { settingsViewModel.clearSettingsContent() }
+        }
+
+        Screen.Splash.route, Screen.Login.route, Screen.SignUp.route, Screen.EmailVerification.route, Screen.PasswordReset.route, Screen.PictureUpload.route -> {
+            {}
+        }
+
+        else -> {
+            { navController.popBackStack() }
+        }
     }
 
     val showTopBar = when (currentRoute) {
@@ -104,23 +119,39 @@ fun DentelApp() {
                     title = topBarTitle,
                     icon = topBarIcon,
                     showBackButton = topBarShowBackButton,
-                    onBackClick = topBarOnBackClick
+                    onBackClick = topBarOnBackClick,
+                    onNotificationClick = {
+                        setShowNotificationsDialog(true)
+                    }
                 )
             }
         },
         bottomBar = {
             if (showBottomBar) {
-                DentelBottomBar(currentRoute = currentRoute) { screen ->
-                    if (currentRoute != screen.route) {
-                        navController.navigate(screen.route) {
-                            popUpTo(Screen.Home.route) { inclusive = false }
-                            launchSingleTop = true
+                DentelBottomBar(
+                    currentRoute = currentRoute,
+                    onTabSelected = { screen ->
+                        if (screen == BottomNavScreen.Notifications) {
+                            setShowNotificationsDialog(true)
+                        } else if (currentRoute != screen.route) {
+                            navController.navigate(screen.route) {
+                                popUpTo(Screen.Home.route) { inclusive = false }
+                                launchSingleTop = true
+                            }
                         }
                     }
-                }
+                )
             }
         }
     ) {
+        // Show the notifications dialog if state is true
+        if (showNotificationsDialog) {
+            NotificationsDialog(
+                visible = true,
+                onDismiss = { setShowNotificationsDialog(false) }
+            )
+        }
+
         NavHost(
             navController = navController, startDestination = Screen.Splash.route,
             modifier = Modifier.padding(it)
@@ -235,11 +266,9 @@ fun DentelApp() {
                 }
                 SettingsScreen(viewModel = settingsViewModel)
             }
-            composable(Screen.Notifications.route) {
-                androidx.compose.material3.Text("Notifications Screen")
-            }
             composable(Screen.Section.route) { backStackEntry ->
-                val sectionId = backStackEntry.arguments?.getString("sectionId") ?: return@composable
+                val sectionId =
+                    backStackEntry.arguments?.getString("sectionId") ?: return@composable
                 SectionScreen(
                     sectionId = sectionId,
                     onTopicClick = { topic ->
@@ -250,19 +279,26 @@ fun DentelApp() {
                         }
                     },
 
-                )
+                    )
             }
             composable(Screen.Video.route) {
-                val topic = navController.previousBackStackEntry?.savedStateHandle?.get<com.m7md7sn.dentel.presentation.ui.section.Topic>("topic")
+                val topic =
+                    navController.previousBackStackEntry?.savedStateHandle?.get<com.m7md7sn.dentel.presentation.ui.section.Topic>(
+                        "topic"
+                    )
                 com.m7md7sn.dentel.presentation.ui.video.VideoScreen(topic = topic)
             }
             composable(Screen.Article.route) {
-                val topic = navController.previousBackStackEntry?.savedStateHandle?.get<com.m7md7sn.dentel.presentation.ui.section.Topic>("topic")
+                val topic =
+                    navController.previousBackStackEntry?.savedStateHandle?.get<com.m7md7sn.dentel.presentation.ui.section.Topic>(
+                        "topic"
+                    )
                 com.m7md7sn.dentel.presentation.ui.article.ArticleScreen(topic = topic)
             }
             // Add Favorites screen composable
             composable(Screen.Favorites.route) {
-                val typeOrdinal = navBackStackEntry?.arguments?.getString("typeOrdinal")?.toIntOrNull() ?: 0
+                val typeOrdinal =
+                    navBackStackEntry?.arguments?.getString("typeOrdinal")?.toIntOrNull() ?: 0
                 FavoritesScreen(
                     selectedTypeOrdinal = typeOrdinal, // Pass the selected type ordinal
                     onFavoriteClick = { favoriteItem ->
