@@ -1,14 +1,19 @@
 package com.m7md7sn.dentel.presentation.ui.settings
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7md7sn.dentel.data.repository.AuthRepository
+import com.m7md7sn.dentel.utils.LocaleUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -17,7 +22,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val application: Application
 ) : ViewModel() {
 
     // Private mutable state flow that can only be modified within the ViewModel
@@ -25,6 +31,21 @@ class SettingsViewModel @Inject constructor(
 
     // Public immutable state flow that can be observed by the UI
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    private val _eventChannel = Channel<Event>()
+    val eventFlow = _eventChannel.receiveAsFlow()
+
+    init {
+        // Initialize with saved language preference or current locale if no preference
+        val savedLanguage = LocaleUtils.getSavedLanguage(application)
+        val currentLanguage = if (savedLanguage != null) {
+            if (savedLanguage == "ar") "Arabic" else "English"
+        } else {
+            LocaleUtils.getDisplayLanguage(Locale.getDefault())
+        }
+
+        _uiState.update { it.copy(selectedLanguage = currentLanguage) }
+    }
 
     /**
      * Logs the user out by calling the auth repository and updating the UI state.
@@ -45,6 +66,22 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    /**
+     * Updates the selected language and app locale.
+     */
+    fun onLanguageSelected(language: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(selectedLanguage = language) }
+            val langCode = if (language == "Arabic") "ar" else "en"
+
+            // Update the app locale using our enhanced utility
+            LocaleUtils.setLocale(application, langCode)
+
+            // Notify UI that we need to recreate the activity to apply changes
+            _eventChannel.send(Event.RecreateActivity)
         }
     }
 
@@ -81,5 +118,9 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { currentState ->
             currentState.copy(errorMessage = null)
         }
+    }
+
+    sealed class Event {
+        object RecreateActivity : Event()
     }
 }

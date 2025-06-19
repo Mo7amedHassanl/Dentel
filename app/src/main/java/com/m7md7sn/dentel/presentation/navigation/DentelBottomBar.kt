@@ -50,10 +50,10 @@ sealed class BottomNavScreen(
 }
 
 val bottomNavItems = listOf(
-    BottomNavScreen.Notifications,
-    BottomNavScreen.Settings,
+    BottomNavScreen.Home,
     BottomNavScreen.Profile,
-    BottomNavScreen.Home
+    BottomNavScreen.Settings,
+    BottomNavScreen.Notifications
 )
 
 @Composable

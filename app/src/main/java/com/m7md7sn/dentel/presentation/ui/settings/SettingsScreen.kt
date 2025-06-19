@@ -1,5 +1,6 @@
 package com.m7md7sn.dentel.presentation.ui.settings
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,10 +8,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,6 +28,7 @@ import com.m7md7sn.dentel.presentation.ui.settings.components.NotificationsConte
 import com.m7md7sn.dentel.presentation.ui.settings.components.SettingsHeader
 import com.m7md7sn.dentel.presentation.ui.settings.components.SettingsList
 import com.m7md7sn.dentel.presentation.ui.settings.components.SupportContent
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Main Settings Screen that orchestrates all the settings components
@@ -37,6 +41,17 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = Unit) {
+        viewModel.eventFlow.collectLatest { event ->
+            when (event) {
+                is SettingsViewModel.Event.RecreateActivity -> {
+                    (context as? Activity)?.recreate()
+                }
+            }
+        }
+    }
 
     // Handle logout navigation
     if (uiState.isLoggedOut) {
@@ -95,7 +110,15 @@ fun SettingsScreen(
                 when (uiState.currentContent) {
                     SettingsContent.Account -> AccountContent()
                     SettingsContent.Notifications -> NotificationsContent()
-                    SettingsContent.Language -> LanguageContent()
+                    SettingsContent.Language -> {
+                        uiState.selectedLanguage?.let {
+                            LanguageContent(
+                                selectedLanguage = it,
+                                onLanguageSelected = { lang -> viewModel.onLanguageSelected(lang) }
+                            )
+                        }
+                    }
+
                     SettingsContent.Support -> SupportContent()
                     null -> TODO()
                 }

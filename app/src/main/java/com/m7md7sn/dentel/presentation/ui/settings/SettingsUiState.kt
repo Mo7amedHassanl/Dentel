@@ -35,6 +35,8 @@ data class SettingsUiState(
     // Content navigation state
     val currentContent: SettingsContent? = null,
 
+    val selectedLanguage: String? = null,
+
     // Loading state
     val isLoading: Boolean = false,
 
