@@ -2,11 +2,8 @@ package com.m7md7sn.dentel.presentation.ui.profile
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,7 +11,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +34,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.setValue
+import com.m7md7sn.dentel.presentation.common.components.FullScreenLoadingOverlay
+import com.m7md7sn.dentel.presentation.ui.favorites.NavigationState
 
 /**
  * Main Profile Screen that displays user information and favorites
@@ -47,7 +45,8 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
     onFavoriteItemClick: (FavoriteItem) -> Unit = {},
-    onNavigateToFavorites: (Int) -> Unit = {} // Updated to pass the type ordinal
+    onNavigateToFavorites: (Int) -> Unit = {}, // Updated to pass the type ordinal
+    navigationState: NavigationState
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -55,47 +54,44 @@ fun ProfileScreen(
         modifier = modifier.fillMaxSize(),
         color = Color.White
     ) {
-        when (uiState) {
-            is ProfileUiState.Loading -> {
-                // Display loading state
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF421882))
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (uiState) {
+                is ProfileUiState.Error -> {
+                    // Display error state
+                    val errorState = uiState as ProfileUiState.Error
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Error: ${errorState.message}",
+                            color = Color.Red,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
                 }
-            }
 
-            is ProfileUiState.Error -> {
-                // Display error state
-                val errorState = uiState as ProfileUiState.Error
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Error: ${errorState.message}",
-                        color = Color.Red,
-                        modifier = Modifier.padding(16.dp)
+                is ProfileUiState.Success -> {
+                    // Display success state with profile data
+                    val successState = uiState as ProfileUiState.Success
+                    ProfileContent(
+                        user = successState.user,
+                        favoriteItems = successState.favoriteItems,
+                        selectedFavoriteType = successState.selectedFavoriteType,
+                        isLoadingFavorites = successState.isLoadingFavorites,
+                        onFavoriteTypeSelected = viewModel::loadFavorites,
+                        onFavoriteItemClick = onFavoriteItemClick,
+                        onShowMoreClick = {
+                            // Pass the type ordinal when navigating to favorites
+                            onNavigateToFavorites(successState.selectedFavoriteType.ordinal)
+                        }
                     )
                 }
-            }
 
-            is ProfileUiState.Success -> {
-                // Display success state with profile data
-                val successState = uiState as ProfileUiState.Success
-                ProfileContent(
-                    user = successState.user,
-                    favoriteItems = successState.favoriteItems,
-                    selectedFavoriteType = successState.selectedFavoriteType,
-                    isLoadingFavorites = successState.isLoadingFavorites,
-                    onFavoriteTypeSelected = viewModel::loadFavorites,
-                    onFavoriteItemClick = onFavoriteItemClick,
-                    onShowMoreClick = {
-                        // Pass the type ordinal when navigating to favorites
-                        onNavigateToFavorites(successState.selectedFavoriteType.ordinal)
-                    }
-                )
+                ProfileUiState.Loading -> TODO()
+            }
+            if (navigationState is NavigationState.Loading) {
+                FullScreenLoadingOverlay()
             }
         }
     }
@@ -157,23 +153,6 @@ private fun ProfileContent(
             )
         }
 
-        // Show more button at the bottom
         ShowMoreButton(onClick = onShowMoreClick)
-    }
-}
-
-@Preview
-@Composable
-private fun ProfileScreenPreviewEn() {
-    DentelTheme {
-        ProfileScreen()
-    }
-}
-
-@Preview(locale = "ar")
-@Composable
-private fun ProfileScreenPreviewAr() {
-    DentelTheme {
-        ProfileScreen()
     }
 }

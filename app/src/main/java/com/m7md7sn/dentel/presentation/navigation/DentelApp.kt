@@ -26,14 +26,10 @@ import com.m7md7sn.dentel.presentation.ui.auth.signup.SignUpScreen
 import com.m7md7sn.dentel.presentation.ui.home.HomeScreen
 import com.m7md7sn.dentel.presentation.ui.splash.SplashScreen
 import com.m7md7sn.dentel.presentation.ui.section.SectionScreen
-import com.m7md7sn.dentel.presentation.navigation.DentelBottomBar
-import com.m7md7sn.dentel.presentation.navigation.BottomNavScreen
 import com.m7md7sn.dentel.presentation.ui.profile.ProfileScreen
 import com.m7md7sn.dentel.presentation.ui.section.TopicType
-import com.m7md7sn.dentel.presentation.ui.settings.SettingsContent
 import com.m7md7sn.dentel.presentation.ui.settings.SettingsScreen
 import com.m7md7sn.dentel.presentation.ui.settings.SettingsViewModel
-import com.m7md7sn.dentel.presentation.navigation.DentelTopBar
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m7md7sn.dentel.presentation.ui.favorites.FavoritesScreen
 import com.m7md7sn.dentel.presentation.ui.favorites.FavoritesViewModel
@@ -273,23 +269,9 @@ fun DentelApp() {
                         },
                         onFavoriteItemClick = { favoriteItem ->
                             favoritesViewModel.onFavoriteItemClicked(favoriteItem)
-                        }
+                        },
+                        navigationState = navigationState
                     )
-
-                    // Show loading indicator when fetching topic
-                    if (navigationState is NavigationState.Loading) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0x80000000)), // Semi-transparent background
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF05B3EF),
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                    }
                 }
             }
             composable(Screen.Settings.route) {
