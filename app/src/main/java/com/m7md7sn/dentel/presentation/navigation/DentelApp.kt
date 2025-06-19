@@ -1,16 +1,17 @@
 package com.m7md7sn.dentel.presentation.navigation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,7 +36,10 @@ import com.m7md7sn.dentel.presentation.ui.settings.SettingsViewModel
 import com.m7md7sn.dentel.presentation.navigation.DentelTopBar
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.m7md7sn.dentel.presentation.ui.favorites.FavoritesScreen
+import com.m7md7sn.dentel.presentation.ui.favorites.FavoritesViewModel
+import com.m7md7sn.dentel.presentation.ui.favorites.NavigationState
 import com.m7md7sn.dentel.presentation.ui.notifications.NotificationsDialog
+import androidx.compose.material3.CircularProgressIndicator
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -244,14 +248,49 @@ fun DentelApp() {
                 )
             }
             composable(Screen.Profile.route) {
-                ProfileScreen(
-                    onNavigateToFavorites = { typeOrdinal ->
-                        navController.navigate("favorites/$typeOrdinal")
-                    },
-                    onFavoriteItemClick = { item ->
-                        // Handle favorite item click if needed
+                val favoritesViewModel: FavoritesViewModel = hiltViewModel()
+                val navigationState by favoritesViewModel.navigationState.collectAsState()
+
+                // Handle navigation from favorites to content screens
+                LaunchedEffect(navigationState) {
+                    when (val state = navigationState) {
+                        is NavigationState.NavigateToContent -> {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("topic", state.topic)
+                            when (state.topic.type) {
+                                TopicType.Video -> navController.navigate(Screen.Video.route)
+                                TopicType.Article -> navController.navigate(Screen.Article.route)
+                            }
+                            favoritesViewModel.resetNavigationState()
+                        }
+                        else -> {}
                     }
-                )
+                }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    ProfileScreen(
+                        onNavigateToFavorites = { typeOrdinal ->
+                            navController.navigate("favorites/$typeOrdinal")
+                        },
+                        onFavoriteItemClick = { favoriteItem ->
+                            favoritesViewModel.onFavoriteItemClicked(favoriteItem)
+                        }
+                    )
+
+                    // Show loading indicator when fetching topic
+                    if (navigationState is NavigationState.Loading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0x80000000)), // Semi-transparent background
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF05B3EF),
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
+                }
             }
             composable(Screen.Settings.route) {
                 val settingsViewModel: SettingsViewModel = hiltViewModel()
@@ -299,12 +338,49 @@ fun DentelApp() {
             composable(Screen.Favorites.route) {
                 val typeOrdinal =
                     navBackStackEntry?.arguments?.getString("typeOrdinal")?.toIntOrNull() ?: 0
-                FavoritesScreen(
-                    selectedTypeOrdinal = typeOrdinal, // Pass the selected type ordinal
-                    onFavoriteClick = { favoriteItem ->
-                        // Handle favorite item click if needed
+
+                val favoritesViewModel: FavoritesViewModel = hiltViewModel()
+                val uiState by favoritesViewModel.uiState.collectAsState()
+                val navigationState by favoritesViewModel.navigationState.collectAsState()
+
+                // Handle navigation from favorites to content screens
+                LaunchedEffect(navigationState) {
+                    when (val state = navigationState) {
+                        is NavigationState.NavigateToContent -> {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("topic", state.topic)
+                            when (state.topic.type) {
+                                TopicType.Video -> navController.navigate(Screen.Video.route)
+                                TopicType.Article -> navController.navigate(Screen.Article.route)
+                            }
+                            favoritesViewModel.resetNavigationState()
+                        }
+                        else -> {}
                     }
-                )
+                }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    FavoritesScreen(
+                        selectedTypeOrdinal = typeOrdinal,
+                        onFavoriteClick = { favoriteItem ->
+                            favoritesViewModel.onFavoriteItemClicked(favoriteItem)
+                        }
+                    )
+
+                    // Show loading indicator when fetching topic
+                    if (navigationState is NavigationState.Loading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0x80000000)), // Semi-transparent background
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF05B3EF),
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }

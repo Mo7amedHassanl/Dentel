@@ -29,4 +29,12 @@ interface SectionRepository {
      * Filter topics by type and search query
      */
     fun filterTopics(allTopics: List<Topic>, type: TopicType, query: String): List<Topic>
+
+    /**
+     * Get a specific topic by id
+     * @param topicId The ID of the topic to fetch
+     * @param topicType The type of the topic (Article or Video)
+     * @throws SectionException if there's an error loading the topic
+     */
+    suspend fun getTopicById(topicId: String, topicType: TopicType): Topic?
 }

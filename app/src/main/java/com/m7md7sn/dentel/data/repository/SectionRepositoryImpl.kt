@@ -76,6 +76,73 @@ class SectionRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getTopicById(topicId: String, topicType: TopicType): Topic? = withContext(Dispatchers.IO) {
+        try {
+            // We need to search across all sections since we don't know which section contains the topic
+            val sectionsRef = db.collection("sections")
+            val sectionsSnapshot = sectionsRef.get().await()
+
+            // Get the appropriate collection name based on type
+            val collectionName = when (topicType) {
+                TopicType.Article -> "articles"
+                TopicType.Video -> "videos"
+            }
+
+            // Search in the appropriate collection type only
+            for (sectionDoc in sectionsSnapshot.documents) {
+                val sectionId = sectionDoc.id
+
+                try {
+                    // Try to get the document by direct path
+                    val docRef = sectionsRef.document(sectionId)
+                        .collection(collectionName)
+                        .document(topicId)
+
+                    val docSnapshot = docRef.get().await()
+
+                    if (docSnapshot.exists()) {
+                        return@withContext when (topicType) {
+                            TopicType.Article -> {
+                                val article = docSnapshot.toObject(Article::class.java)
+                                if (article != null) {
+                                    Topic(
+                                        id = topicId,
+                                        title = article.title,
+                                        subtitle = article.subtitle,
+                                        type = TopicType.Article,
+                                        content = article.content,
+                                        imageUrl = article.imageUrl
+                                    )
+                                } else null
+                            }
+                            TopicType.Video -> {
+                                val video = docSnapshot.toObject(Video::class.java)
+                                if (video != null) {
+                                    Topic(
+                                        id = topicId,
+                                        title = video.title,
+                                        subtitle = video.subtitle,
+                                        type = TopicType.Video,
+                                        videoUrl = video.videoUrl,
+                                        thumbnailUrl = video.thumbnailUrl,
+                                        content = video.description
+                                    )
+                                } else null
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Continue to the next section if there's an error
+                    continue
+                }
+            }
+
+            return@withContext null
+        } catch (e: Exception) {
+            throw SectionException("Error fetching topic: ${e.message}")
+        }
+    }
+
     override fun filterTopics(allTopics: List<Topic>, type: TopicType, query: String): List<Topic> {
         return allTopics.filter { topic ->
             topic.type == type && (
