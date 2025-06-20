@@ -35,7 +35,14 @@ data class SettingsUiState(
     // Content navigation state
     val currentContent: SettingsContent? = null,
 
+    // Language state
     val selectedLanguage: String? = null,
+
+    // Support form state
+    val supportEmail: String = "",
+    val supportMessage: String = "",
+    val isEmailError: Boolean = false,
+    val isMessageError: Boolean = false,
 
     // Loading state
     val isLoading: Boolean = false,

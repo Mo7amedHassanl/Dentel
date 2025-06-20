@@ -1,6 +1,7 @@
 package com.m7md7sn.dentel.presentation.ui.settings
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,6 +49,12 @@ fun SettingsScreen(
             when (event) {
                 is SettingsViewModel.Event.RecreateActivity -> {
                     (context as? Activity)?.recreate()
+                }
+                is SettingsViewModel.Event.EmailSendSuccess -> {
+                    Toast.makeText(context, "Email sent successfully", Toast.LENGTH_SHORT).show()
+                }
+                is SettingsViewModel.Event.EmailSendError -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -118,9 +125,17 @@ fun SettingsScreen(
                             )
                         }
                     }
-
-                    SettingsContent.Support -> SupportContent()
-                    null -> TODO()
+                    SettingsContent.Support -> SupportContent(
+                        email = uiState.supportEmail,
+                        message = uiState.supportMessage,
+                        isEmailError = uiState.isEmailError,
+                        isMessageError = uiState.isMessageError,
+                        isLoading = uiState.isLoading,
+                        onEmailChange = { email -> viewModel.updateSupportEmail(email) },
+                        onMessageChange = { message -> viewModel.updateSupportMessage(message) },
+                        onSendClick = { viewModel.validateAndSendSupportEmail() }
+                    )
+                    null -> {}
                 }
             }
         }

@@ -52,5 +52,6 @@
     <string name="support">الدعم</string>
     <string name="logout">تسجيل الخروج</string>
     <string name="dont_have_notifications">لا يوجد لديك إشعارات</string>
+    <string name="contact_developer">Contact Developer</string>
 
 </resources>

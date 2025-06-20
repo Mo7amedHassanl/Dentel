@@ -1,6 +1,9 @@
 package com.m7md7sn.dentel.presentation.ui.settings
 
 import android.app.Application
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7md7sn.dentel.data.repository.AuthRepository
@@ -86,6 +89,76 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
+     * Updates the support email field and validates the format
+     *
+     * @param email The email input from user
+     */
+    fun updateSupportEmail(email: String) {
+        _uiState.update {
+            it.copy(
+                supportEmail = email,
+                isEmailError = email.isNotEmpty() && !isValidEmail(email)
+            )
+        }
+    }
+
+    /**
+     * Updates the support message field and validates it's not empty
+     *
+     * @param message The message input from user
+     */
+    fun updateSupportMessage(message: String) {
+        _uiState.update {
+            it.copy(
+                supportMessage = message,
+                isMessageError = message.isEmpty()
+            )
+        }
+    }
+
+    /**
+     * Validates and sends a support email if inputs are valid
+     */
+    fun validateAndSendSupportEmail() {
+        val currentState = _uiState.value
+        val isEmailValid = isValidEmail(currentState.supportEmail)
+        val isMessageValid = currentState.supportMessage.isNotEmpty()
+
+        _uiState.update {
+            it.copy(
+                isEmailError = !isEmailValid,
+                isMessageError = !isMessageValid
+            )
+        }
+
+        if (isEmailValid && isMessageValid) {
+            sendSupportEmail(currentState.supportEmail, currentState.supportMessage)
+        }
+    }
+
+    /**
+     * Clear support form fields after successful submission
+     */
+    private fun clearSupportForm() {
+        _uiState.update {
+            it.copy(
+                supportEmail = "",
+                supportMessage = "",
+                isEmailError = false,
+                isMessageError = false
+            )
+        }
+    }
+
+    /**
+     * Validates email format
+     */
+    private fun isValidEmail(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}\$"
+        return email.matches(emailRegex.toRegex())
+    }
+
+    /**
      * Updates the UI state to display selected settings content.
      *
      * @param content The settings content to display
@@ -120,7 +193,63 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Sends a support email to the developer
+     *
+     * @param email User's email address
+     * @param message Support message content
+     */
+    fun sendSupportEmail(email: String, message: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            try {
+                // Constants
+                val developerEmail = "dev.m7md7asn@gmail.com"// Replace with actual developer email
+                val subject = "Dentel App Support Request"
+
+                // Format the message to include the sender's email
+                val formattedMessage = """
+                    From: $email
+
+                    $message
+                """.trimIndent()
+
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "message/rfc822"
+                    putExtra(Intent.EXTRA_EMAIL, arrayOf(developerEmail))
+                    putExtra(Intent.EXTRA_SUBJECT, subject)
+                    putExtra(Intent.EXTRA_TEXT, formattedMessage)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+
+                try {
+                    application.startActivity(Intent.createChooser(intent, "Send email using...").apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
+
+                    // Clear the form after successful send
+                    clearSupportForm()
+
+                    // Send successful event
+                    _eventChannel.send(Event.EmailSendSuccess)
+
+                } catch (e: ActivityNotFoundException) {
+                    // No email app found
+                    _eventChannel.send(Event.EmailSendError("No email app found on this device"))
+                }
+            } catch (e: Exception) {
+                // General error
+                _eventChannel.send(Event.EmailSendError("Failed to send email: ${e.message}"))
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
     sealed class Event {
         object RecreateActivity : Event()
+        object EmailSendSuccess : Event()
+        data class EmailSendError(val message: String) : Event()
     }
 }
