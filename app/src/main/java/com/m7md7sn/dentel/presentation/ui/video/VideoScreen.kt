@@ -3,6 +3,7 @@ package com.m7md7sn.dentel.presentation.ui.video
 import android.app.Activity
 import android.content.res.Configuration
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,6 +32,10 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -42,6 +48,7 @@ import com.m7md7sn.dentel.presentation.ui.home.components.SubtitleWithLogo
 import com.m7md7sn.dentel.presentation.ui.home.components.SuggestedTopicsList
 
 import com.m7md7sn.dentel.presentation.ui.section.Topic
+import com.m7md7sn.dentel.presentation.ui.section.TopicType
 import com.m7md7sn.dentel.presentation.ui.video.components.ArticleVideoTitle
 import com.m7md7sn.dentel.presentation.ui.video.components.VideoDescriptionWithLikeAndShareButtons
 import com.m7md7sn.dentel.presentation.ui.video.components.YouTubePlayerViewWrapper
@@ -51,7 +58,9 @@ import com.m7md7sn.dentel.presentation.ui.video.components.extractYoutubeVideoId
 fun VideoScreen(
     topic: Topic?,
     modifier: Modifier = Modifier,
-    viewModel: VideoViewModel = hiltViewModel()
+    viewModel: VideoViewModel = hiltViewModel(),
+    onNavigateToVideo: (Topic) -> Unit = {},
+    onNavigateToArticle: (Topic) -> Unit = {}
 ) {
     val currentLanguage = LocalConfiguration.current.locale.language
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -63,6 +72,28 @@ fun VideoScreen(
 
     val window = (LocalView.current.context as ComponentActivity).window
 
+    // Observe UI state and navigation state
+    val uiState by viewModel.uiState.collectAsState()
+    val navigationState by viewModel.navigationState.collectAsState()
+    val videoId = topic?.videoUrl?.let { extractYoutubeVideoId(it) }
+
+    // Handle navigation based on navigation state
+    LaunchedEffect(navigationState) {
+        when (val state = navigationState) {
+            is NavigationState.NavigateToContent -> {
+                when (state.topic.type) {
+                    TopicType.Video -> onNavigateToVideo(state.topic)
+                    TopicType.Article -> onNavigateToArticle(state.topic)
+                }
+                viewModel.resetNavigationState()
+            }
+            is NavigationState.Error -> {
+                // Could show a snackbar or other error indicator here
+            }
+            else -> { /* No action needed */ }
+        }
+    }
+
     // Load video from topic when screen is first displayed
     DisposableEffect(Unit) {
         if (topic != null) {
@@ -71,84 +102,101 @@ fun VideoScreen(
         onDispose { }
     }
 
-    // Observe UI state
-    val uiState by viewModel.uiState.collectAsState()
-    val videoId = topic?.videoUrl?.let { extractYoutubeVideoId(it) }
-
     Surface(
         modifier = modifier.fillMaxSize(),
         color = DentelDarkPurple
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // Display title from Topic or fetched Video
-            ArticleVideoTitle(title = uiState.video?.title ?: topic?.title ?: "")
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // Display title from Topic or fetched Video
+                ArticleVideoTitle(title = uiState.video?.title ?: topic?.title ?: "")
 
-            HorizontalDivider(
-                Modifier.width(330.dp),
-                color = Color(0xFF444B88),
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(
+                    Modifier.width(330.dp),
+                    color = Color(0xFF444B88),
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Display YouTube Player or Placeholder
-            if (videoId != null) {
-                YouTubePlayerViewWrapper(
-                    videoId = videoId,
-                    lifecycleOwner = lifecycleOwner,
-                    playbackPosition = playbackPosition,
-                    onPlaybackPositionChanged = { newPosition -> playbackPosition = newPosition },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .then(if (isLandscape) Modifier.fillMaxHeight() else Modifier),
-                    activity = activity
+                // Display YouTube Player or Placeholder
+                if (videoId != null) {
+                    YouTubePlayerViewWrapper(
+                        videoId = videoId,
+                        lifecycleOwner = lifecycleOwner,
+                        playbackPosition = playbackPosition,
+                        onPlaybackPositionChanged = { newPosition -> playbackPosition = newPosition },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .then(if (isLandscape) Modifier.fillMaxHeight() else Modifier),
+                        activity = activity
+                    )
+                } else {
+                    // Fallback placeholder
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_video_placeholder),
+                        contentDescription = "Video Player Placeholder",
+                        modifier = Modifier
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Video description with like/share buttons
+                VideoDescriptionWithLikeAndShareButtons(
+                    description = uiState.video?.description ?: topic?.content ?: "",
+                    title = uiState.video?.title ?: topic?.title ?: "",
+                    videoUrl = uiState.video?.videoUrl ?: topic?.videoUrl ?: "",
+                    isFavorite = uiState.isFavorite,
+                    onLikeClick = { viewModel.toggleFavorite() }
                 )
-            } else {
-                // Fallback placeholder
-                Image(
-                    painter = painterResource(id = R.drawable.ic_video_placeholder),
-                    contentDescription = "Video Player Placeholder",
-                    modifier = Modifier
-                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Suggested topics section
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    SubtitleWithLogo(
+                        titleRes = R.string.suggested_topics,
+                        highlightedText = if (currentLanguage == "ar") "مواضيع" else "Topics",
+                        highlightedTextColor = DentelLightPurple
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // Suggested topics list
+                if (uiState.suggestedTopics.isNotEmpty()) {
+                    SuggestedTopicsList(
+                        topics = uiState.suggestedTopics,
+                        onTopicClick = { suggestedTopic ->
+                            viewModel.onSuggestedTopicClicked(suggestedTopic)
+                        }
+                    )
+                } else if (uiState.suggestedTopicsError != null) {
+                    Text(
+                        text = uiState.suggestedTopicsError ?: "Failed to load suggested topics",
+                        color = Color.White,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Video description with like/share buttons
-            VideoDescriptionWithLikeAndShareButtons(
-                description = uiState.video?.description ?: topic?.content ?: "",
-                title = uiState.video?.title ?: topic?.title ?: "",
-                videoUrl = uiState.video?.videoUrl ?: topic?.videoUrl ?: "",
-                isFavorite = uiState.isFavorite,
-                onLikeClick = { viewModel.toggleFavorite() }
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Suggested topics section
-            Box(modifier = Modifier.fillMaxWidth()) {
-                SubtitleWithLogo(
-                    titleRes = R.string.suggested_topics,
-                    highlightedText = if (currentLanguage == "ar") "مواضيع" else "Topics",
-                    highlightedTextColor = DentelLightPurple
-                )
+            // Show loading overlay when fetching topic
+            if (navigationState is NavigationState.Loading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0x80000000)), // Semi-transparent background
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = DentelDarkPurple,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             }
-
-            Spacer(Modifier.height(16.dp))
-
-            // Suggested topics list
-            SuggestedTopicsList(
-                listOf(
-                    SuggestedTopic(" حشوات الأسنان \nكل ما تريد معرفته عنها"),
-                    SuggestedTopic("Root Canal Treatment"),
-                    SuggestedTopic("Teeth Whitening"),
-                    SuggestedTopic("Orthodontics"),
-                    SuggestedTopic("Cosmetic Dentistry"),
-                    SuggestedTopic("Oral Hygiene Tips")
-                )
-            )
         }
     }
 }

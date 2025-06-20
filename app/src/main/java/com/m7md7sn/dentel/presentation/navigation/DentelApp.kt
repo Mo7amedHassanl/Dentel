@@ -36,6 +36,9 @@ import com.m7md7sn.dentel.presentation.ui.favorites.FavoritesViewModel
 import com.m7md7sn.dentel.presentation.ui.favorites.NavigationState
 import com.m7md7sn.dentel.presentation.ui.notifications.NotificationsDialog
 import androidx.compose.material3.CircularProgressIndicator
+import com.m7md7sn.dentel.presentation.ui.article.ArticleViewModel
+import com.m7md7sn.dentel.presentation.ui.home.HomeViewModel
+import com.m7md7sn.dentel.presentation.ui.video.VideoViewModel
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -237,9 +240,35 @@ fun DentelApp() {
                 )
             }
             composable(Screen.Home.route) {
+                val homeViewModel: HomeViewModel = hiltViewModel()
+                val navigationState by homeViewModel.navigationState.collectAsState()
+
+                // Handle navigation from home to content screens
+                LaunchedEffect(navigationState) {
+                    when (val state = navigationState) {
+                        is NavigationState.NavigateToContent -> {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("topic", state.topic)
+                            when (state.topic.type) {
+                                TopicType.Video -> navController.navigate(Screen.Video.route)
+                                TopicType.Article -> navController.navigate(Screen.Article.route)
+                            }
+                            homeViewModel.resetNavigationState()
+                        }
+                        else -> {}
+                    }
+                }
+
                 HomeScreen(
                     onSectionClick = { sectionId ->
                         navController.navigate("section/$sectionId")
+                    },
+                    onNavigateToVideo = { topic ->
+                        navController.currentBackStackEntry?.savedStateHandle?.set("topic", topic)
+                        navController.navigate(Screen.Video.route)
+                    },
+                    onNavigateToArticle = { topic ->
+                        navController.currentBackStackEntry?.savedStateHandle?.set("topic", topic)
+                        navController.navigate(Screen.Article.route)
                     }
                 )
             }
@@ -307,14 +336,92 @@ fun DentelApp() {
                     navController.previousBackStackEntry?.savedStateHandle?.get<com.m7md7sn.dentel.presentation.ui.section.Topic>(
                         "topic"
                     )
-                com.m7md7sn.dentel.presentation.ui.video.VideoScreen(topic = topic)
+                val videoViewModel: VideoViewModel = hiltViewModel()
+                val navigationState by videoViewModel.navigationState.collectAsState()
+
+                // Handle navigation from video screen to other content screens
+                LaunchedEffect(navigationState) {
+                    when (val state = navigationState) {
+                        is NavigationState.NavigateToContent -> {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("topic", state.topic)
+                            when (state.topic.type) {
+                                TopicType.Video -> {
+                                    if (navController.currentDestination?.route == Screen.Video.route) {
+                                        // If already on video screen, use popUpTo to avoid stack buildup
+                                        navController.navigate(Screen.Video.route) {
+                                            popUpTo(Screen.Video.route) { inclusive = true }
+                                        }
+                                    } else {
+                                        navController.navigate(Screen.Video.route)
+                                    }
+                                }
+                                TopicType.Article -> navController.navigate(Screen.Article.route)
+                            }
+                            videoViewModel.resetNavigationState()
+                        }
+                        else -> {}
+                    }
+                }
+
+                com.m7md7sn.dentel.presentation.ui.video.VideoScreen(
+                    topic = topic,
+                    onNavigateToVideo = { videoTopic ->
+                        navController.currentBackStackEntry?.savedStateHandle?.set("topic", videoTopic)
+                        navController.navigate(Screen.Video.route) {
+                            popUpTo(Screen.Video.route) { inclusive = true }
+                        }
+                    },
+                    onNavigateToArticle = { articleTopic ->
+                        navController.currentBackStackEntry?.savedStateHandle?.set("topic", articleTopic)
+                        navController.navigate(Screen.Article.route)
+                    }
+                )
             }
             composable(Screen.Article.route) {
                 val topic =
                     navController.previousBackStackEntry?.savedStateHandle?.get<com.m7md7sn.dentel.presentation.ui.section.Topic>(
                         "topic"
                     )
-                com.m7md7sn.dentel.presentation.ui.article.ArticleScreen(topic = topic)
+                val articleViewModel: ArticleViewModel = hiltViewModel()
+                val navigationState by articleViewModel.navigationState.collectAsState()
+
+                // Handle navigation from article screen to other content screens
+                LaunchedEffect(navigationState) {
+                    when (val state = navigationState) {
+                        is NavigationState.NavigateToContent -> {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("topic", state.topic)
+                            when (state.topic.type) {
+                                TopicType.Video -> navController.navigate(Screen.Video.route)
+                                TopicType.Article -> {
+                                    if (navController.currentDestination?.route == Screen.Article.route) {
+                                        // If already on article screen, use popUpTo to avoid stack buildup
+                                        navController.navigate(Screen.Article.route) {
+                                            popUpTo(Screen.Article.route) { inclusive = true }
+                                        }
+                                    } else {
+                                        navController.navigate(Screen.Article.route)
+                                    }
+                                }
+                            }
+                            articleViewModel.resetNavigationState()
+                        }
+                        else -> {}
+                    }
+                }
+
+                com.m7md7sn.dentel.presentation.ui.article.ArticleScreen(
+                    topic = topic,
+                    onNavigateToVideo = { videoTopic ->
+                        navController.currentBackStackEntry?.savedStateHandle?.set("topic", videoTopic)
+                        navController.navigate(Screen.Video.route)
+                    },
+                    onNavigateToArticle = { articleTopic ->
+                        navController.currentBackStackEntry?.savedStateHandle?.set("topic", articleTopic)
+                        navController.navigate(Screen.Article.route) {
+                            popUpTo(Screen.Article.route) { inclusive = true }
+                        }
+                    }
+                )
             }
             // Add Favorites screen composable
             composable(Screen.Favorites.route) {

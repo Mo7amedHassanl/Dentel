@@ -1,9 +1,12 @@
 package com.m7md7sn.dentel.data.repository
 
+import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
 import com.m7md7sn.dentel.data.model.Section
 import com.m7md7sn.dentel.data.model.SuggestedTopic
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,7 +34,9 @@ interface HomeRepository {
  * Implementation of HomeRepository
  */
 @Singleton
-class HomeRepositoryImpl @Inject constructor() : HomeRepository {
+class HomeRepositoryImpl @Inject constructor(
+    private val firestore: FirebaseFirestore
+) : HomeRepository {
 
     override fun getSections(): Flow<List<Section>> = flow {
         // In a real app, this might come from a database or remote API
@@ -39,15 +44,24 @@ class HomeRepositoryImpl @Inject constructor() : HomeRepository {
     }
 
     override fun getSuggestedTopics(): Flow<List<SuggestedTopic>> = flow {
-        // In a real app, this might come from a backend API
-        emit(listOf(
-            SuggestedTopic(" حشوات الأسنان \nكل ما تريد معرفته عنها"),
-            SuggestedTopic("Root Canal Treatment"),
-            SuggestedTopic("Teeth Whitening"),
-            SuggestedTopic("Orthodontics"),
-            SuggestedTopic("Cosmetic Dentistry"),
-            SuggestedTopic("Oral Hygiene Tips")
-        ))
+        try {
+            // Fetch suggested topics from Firestore "suggestions" collection
+            val snapshot = firestore.collection("suggestions")
+                .get()
+                .await()
+
+            val suggestedTopics = snapshot.documents.mapNotNull { document ->
+                document.toObject(SuggestedTopic::class.java)?.copy(id = document.id)
+            }
+
+            emit(suggestedTopics)
+        } catch (e: Exception) {
+            // Log the error for debugging purposes
+            Log.e("HomeRepository", "Error fetching suggested topics: ${e.message}", e)
+
+            // Propagate the error to the ViewModel to handle appropriately
+            throw Exception("Failed to load suggested topics: ${e.message}", e)
+        }
     }
 
     override fun getDailyReminder(): Flow<ReminderMessage> = flow {

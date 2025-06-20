@@ -1,5 +1,7 @@
 package com.m7md7sn.dentel.data.model
 
 data class SuggestedTopic(
-    val title: String
+    val id: String = "",
+    val title: String = "",
+    val type: String = "",
 )

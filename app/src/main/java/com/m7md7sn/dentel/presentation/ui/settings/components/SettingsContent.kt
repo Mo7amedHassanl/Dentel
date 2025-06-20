@@ -59,7 +59,7 @@ fun AccountContent() {
 @Composable
 fun NotificationsContent() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Notifications Settings Content")
+        Text("Coming Soon...")
     }
 }
 

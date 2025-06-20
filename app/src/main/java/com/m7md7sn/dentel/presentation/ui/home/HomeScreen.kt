@@ -1,17 +1,20 @@
 package com.m7md7sn.dentel.presentation.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,67 +41,112 @@ import com.m7md7sn.dentel.presentation.ui.home.components.SuggestedTopicsList
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
-    onSectionClick: (String) -> Unit = {}
+    onSectionClick: (String) -> Unit = {},
+    onNavigateToVideo: (com.m7md7sn.dentel.presentation.ui.section.Topic) -> Unit = {},
+    onNavigateToArticle: (com.m7md7sn.dentel.presentation.ui.section.Topic) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val navigationState by viewModel.navigationState.collectAsState()
     val currentLanguage = LocalConfiguration.current.locale.language
     val scrollState = rememberScrollState()
+
+    // Handle navigation based on navigation state
+    LaunchedEffect(navigationState) {
+        when (val state = navigationState) {
+            is NavigationState.NavigateToContent -> {
+                when (state.topic.type) {
+                    com.m7md7sn.dentel.presentation.ui.section.TopicType.Video ->
+                        onNavigateToVideo(state.topic)
+                    com.m7md7sn.dentel.presentation.ui.section.TopicType.Article ->
+                        onNavigateToArticle(state.topic)
+                }
+                viewModel.resetNavigationState()
+            }
+            is NavigationState.Error -> {
+                // Could show a snackbar or other error indicator here
+            }
+            else -> { /* No action needed */ }
+        }
+    }
 
     Surface(
         modifier = modifier.fillMaxSize(),
         color = DentelDarkPurple
     ) {
-        when (uiState) {
-            is HomeUiState.Loading -> {
-                // Display loading indicator
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color.White)
-                }
-            }
-
-            is HomeUiState.Error -> {
-                val errorState = uiState as HomeUiState.Error
-
-                if (errorState.sections.isEmpty()) {
-                    // Show error message if we have no data to display
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (uiState) {
+                is HomeUiState.Loading -> {
+                    // Display loading indicator
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = errorState.message,
-                            color = Color.White,
-                            modifier = Modifier.padding(16.dp)
+                        CircularProgressIndicator(color = Color.White)
+                    }
+                }
+
+                is HomeUiState.Error -> {
+                    val errorState = uiState as HomeUiState.Error
+
+                    if (errorState.sections.isEmpty()) {
+                        // Show error message if we have no data to display
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = errorState.message,
+                                color = Color.White,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    } else {
+                        // Display content with available data even if there was an error
+                        HomeContent(
+                            sections = errorState.sections,
+                            suggestedTopics = errorState.suggestedTopics,
+                            reminder = errorState.reminder,
+                            currentLanguage = currentLanguage,
+                            scrollState = scrollState,
+                            onSectionClick = onSectionClick,
+                            onTopicClick = { suggestedTopic ->
+                                viewModel.onSuggestedTopicClicked(suggestedTopic)
+                            }
                         )
                     }
-                } else {
-                    // Display content with available data even if there was an error
+                }
+
+                is HomeUiState.Success -> {
+                    val successState = uiState as HomeUiState.Success
+
+                    // Display full content
                     HomeContent(
-                        sections = errorState.sections,
-                        suggestedTopics = errorState.suggestedTopics,
-                        reminder = errorState.reminder,
+                        sections = successState.sections,
+                        suggestedTopics = successState.suggestedTopics,
+                        reminder = successState.reminder,
                         currentLanguage = currentLanguage,
                         scrollState = scrollState,
-                        onSectionClick = onSectionClick
+                        onSectionClick = onSectionClick,
+                        onTopicClick = { suggestedTopic ->
+                            viewModel.onSuggestedTopicClicked(suggestedTopic)
+                        }
                     )
                 }
             }
 
-            is HomeUiState.Success -> {
-                val successState = uiState as HomeUiState.Success
-
-                // Display full content
-                HomeContent(
-                    sections = successState.sections,
-                    suggestedTopics = successState.suggestedTopics,
-                    reminder = successState.reminder,
-                    currentLanguage = currentLanguage,
-                    scrollState = scrollState,
-                    onSectionClick = onSectionClick
-                )
+            // Show loading overlay when fetching topic
+            if (navigationState is NavigationState.Loading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0x80000000)), // Semi-transparent background
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = DentelDarkPurple,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             }
         }
     }
@@ -114,7 +162,8 @@ private fun HomeContent(
     reminder: com.m7md7sn.dentel.data.repository.ReminderMessage?,
     currentLanguage: String,
     scrollState: androidx.compose.foundation.ScrollState,
-    onSectionClick: (String) -> Unit
+    onSectionClick: (String) -> Unit,
+    onTopicClick: (com.m7md7sn.dentel.data.model.SuggestedTopic) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -158,7 +207,8 @@ private fun HomeContent(
 
         // Suggested topics carousel
         SuggestedTopicsList(
-            topics = suggestedTopics
+            topics = suggestedTopics,
+            onTopicClick = onTopicClick
         )
 
         Spacer(Modifier.height(24.dp))
