@@ -38,6 +38,18 @@ data class SettingsUiState(
     // Language state
     val selectedLanguage: String? = null,
 
+    // Profile info state
+    val profileName: String = "",
+    val profileEmail: String = "",
+    val profilePhotoUrl: String? = null,
+    val profileNameError: String? = null,
+
+    // Profile image upload state
+    val selectedImageUri: android.net.Uri? = null,
+    val isUploading: Boolean = false,
+    val uploadProgress: Int = 0,
+    val uploadSuccess: Boolean = false,
+
     // Support form state
     val supportEmail: String = "",
     val supportMessage: String = "",

@@ -32,7 +32,8 @@ fun CommonTextField(
     errorMessage: String? = null,
     modifier: Modifier = Modifier,
     visualTransformation: VisualTransformation = VisualTransformation.None,
-    onTrailingIconClick: (() -> Unit)? = null
+    onTrailingIconClick: (() -> Unit)? = null,
+    enabled: Boolean = true
 ) {
     OutlinedTextField(
         value = value,
@@ -44,6 +45,7 @@ fun CommonTextField(
             cursorColor = DentelDarkPurple,
             focusedTextColor = DentelDarkPurple,
             unfocusedTextColor = DentelDarkPurple,
+            disabledTextColor = DentelDarkPurple.copy(alpha = 0.8f),
         ),
         label = {
             Text(
@@ -75,6 +77,7 @@ fun CommonTextField(
                 )
             }
         } else null,
-        visualTransformation = visualTransformation
+        visualTransformation = visualTransformation,
+        enabled = enabled
     )
 }

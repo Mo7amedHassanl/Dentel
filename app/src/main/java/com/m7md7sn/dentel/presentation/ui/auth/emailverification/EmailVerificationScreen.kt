@@ -51,16 +51,21 @@ fun EmailVerificationScreen(
 
     // Handle verification result
     LaunchedEffect(uiState.verificationResult) {
-        if (uiState.verificationResult is Result.Success && uiState.isEmailSent) {
-            // This block handles initial email sent success. For actual verification check,
-            // the ViewModel's `checkEmailVerificationStatus` will handle it.
-            // We'll navigate only when `checkEmailVerificationStatus` confirms verification.
-        } else if (uiState.verificationResult is Result.Success<*>) {
-            // This indicates a successful verification check, now navigate
-            onEmailVerified()
-            viewModel.resetVerificationResult()
-        } else if (uiState.verificationResult is Result.Error) {
-            viewModel.resetVerificationResult()
+        when (uiState.verificationResult) {
+            is Result.Success -> {
+                // Check if this is just the initial email sending success or actual verification
+                if (!uiState.isEmailSent) {
+                    // This means we're in the initial state, do nothing
+                } else {
+                    // This indicates a successful verification check, now navigate
+                    onEmailVerified()
+                    viewModel.resetVerificationResult()
+                }
+            }
+            is Result.Error -> {
+                viewModel.resetVerificationResult()
+            }
+            else -> {} // Handle Loading or null state
         }
     }
 

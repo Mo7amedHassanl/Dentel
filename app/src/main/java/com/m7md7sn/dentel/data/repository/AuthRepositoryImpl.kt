@@ -130,4 +130,61 @@ class AuthRepositoryImpl @Inject constructor(
             Result.Error(e.localizedMessage ?: "Failed to update profile.", e)
         }
     }
+
+    override suspend fun updatePassword(newPassword: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                user.updatePassword(newPassword).await()
+                Result.Success(Unit)
+            } else {
+                Result.Error("User not logged in.")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.localizedMessage ?: "Failed to update password.", e)
+        }
+    }
+
+    override suspend fun updateEmail(newEmail: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                user.updateEmail(newEmail).await()
+                Result.Success(Unit)
+            } else {
+                Result.Error("User not logged in.")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.localizedMessage ?: "Failed to update email.", e)
+        }
+    }
+
+    override suspend fun reauthenticate(currentEmail: String, currentPassword: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(currentEmail, currentPassword)
+                user.reauthenticate(credential).await()
+                Result.Success(Unit)
+            } else {
+                Result.Error("User not logged in.")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.localizedMessage ?: "Re-authentication failed.", e)
+        }
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                user.delete().await()
+                Result.Success(Unit)
+            } else {
+                Result.Error("User not logged in.")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.localizedMessage ?: "Failed to delete account.", e)
+        }
+    }
 } 

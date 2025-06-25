@@ -3,21 +3,33 @@ package com.m7md7sn.dentel.presentation.ui.settings
 import android.app.Application
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cloudinary.android.MediaManager
+import com.cloudinary.android.callback.ErrorInfo
+import com.cloudinary.android.callback.UploadCallback
+import com.google.firebase.auth.UserProfileChangeRequest
+import com.m7md7sn.dentel.data.model.User
 import com.m7md7sn.dentel.data.repository.AuthRepository
+import com.m7md7sn.dentel.data.repository.ProfileRepository
 import com.m7md7sn.dentel.utils.LocaleUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
+import androidx.core.net.toUri
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
  * ViewModel responsible for managing settings screen state and user interactions.
@@ -26,6 +38,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val profileRepository: ProfileRepository,
     private val application: Application
 ) : ViewModel() {
 
@@ -38,7 +51,31 @@ class SettingsViewModel @Inject constructor(
     private val _eventChannel = Channel<Event>()
     val eventFlow = _eventChannel.receiveAsFlow()
 
+    // One-time events like snackbar messages
+    private val _snackbarMessage = MutableSharedFlow<String>()
+    val snackbarMessage = _snackbarMessage
+
+    // Dialog state for account management
+    var showChangePasswordDialog = MutableStateFlow(false)
+    var changePasswordCurrent = MutableStateFlow("")
+    var changePasswordNew = MutableStateFlow("")
+    var showResetPasswordDialog = MutableStateFlow(false)
+    var showDeleteAccountDialog = MutableStateFlow(false)
+    var deleteAccountPassword = MutableStateFlow("")
+
     init {
+        // Observe user profile and update state
+        viewModelScope.launch {
+            profileRepository.getUserProfile().collectLatest { user ->
+                _uiState.update {
+                    it.copy(
+                        profileName = user.name,
+                        profileEmail = user.email,
+                        profilePhotoUrl = user.photoUrl
+                    )
+                }
+            }
+        }
         // Initialize with saved language preference or current locale if no preference
         val savedLanguage = LocaleUtils.getSavedLanguage(application)
         val currentLanguage = if (savedLanguage != null) {
@@ -244,6 +281,244 @@ class SettingsViewModel @Inject constructor(
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
+        }
+    }
+
+    // --- Account/Profile Section Logic ---
+
+    fun onNameChange(newName: String) {
+        _uiState.update { it.copy(profileName = newName, profileNameError = null) }
+    }
+
+    fun onUpdateProfileClick() {
+        val name = _uiState.value.profileName.trim()
+        if (name.isBlank()) {
+            _uiState.update { it.copy(profileNameError = "Name cannot be empty") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, profileNameError = null) }
+            val result = authRepository.updateUserProfile(name)
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    profileNameError = if (result is com.m7md7sn.dentel.utils.Result.Error) result.message else null
+                )
+            }
+        }
+    }
+
+    fun onPhotoClick() {
+        // This should trigger the image picker in the UI
+        // UI should call setSelectedImageUri(uri) after picking
+        // No-op here, but method provided for composable callback
+    }
+
+    fun setSelectedImageUri(uri: Uri?) {
+        _uiState.update { it.copy(selectedImageUri = uri) }
+    }
+
+    private fun getFileFromUri(uri: Uri): File? {
+        return try {
+            val inputStream = application.contentResolver.openInputStream(uri) ?: return null
+            val tempFile = File.createTempFile("upload", ".jpg", application.cacheDir)
+            tempFile.outputStream().use { output ->
+                inputStream.copyTo(output)
+            }
+            tempFile
+        } catch (e: IOException) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun uploadProfilePicture() {
+        val uri = _uiState.value.selectedImageUri
+        if (uri == null) {
+            _uiState.update { it.copy(errorMessage = "No image selected.") }
+            viewModelScope.launch { _snackbarMessage.emit("No image selected.") }
+            return
+        }
+        _uiState.update { it.copy(isUploading = true, uploadProgress = 0, errorMessage = null, uploadSuccess = false) }
+        viewModelScope.launch {
+            try {
+                val userId = authRepository.currentUser?.uid
+                if (userId == null) {
+                    _uiState.update { it.copy(isUploading = false, errorMessage = "User not logged in.") }
+                    _snackbarMessage.emit("User not logged in.")
+                    return@launch
+                }
+                val file = getFileFromUri(uri)
+                if (file == null) {
+                    _uiState.update { it.copy(isUploading = false, errorMessage = "Failed to read image file.") }
+                    _snackbarMessage.emit("Failed to read image file.")
+                    return@launch
+                }
+                MediaManager.get().upload(file.absolutePath)
+                    .option("folder", "profile_pictures")
+                    .option("public_id", userId)
+                    .unsigned("dentel_profile_pictures")
+                    .callback(object : UploadCallback {
+                        override fun onStart(requestId: String) {}
+                        override fun onProgress(requestId: String, bytes: Long, totalBytes: Long) {
+                            val progress = ((bytes * 100) / totalBytes).toInt()
+                            _uiState.update { it.copy(uploadProgress = progress) }
+                        }
+                        override fun onSuccess(requestId: String, resultData: Map<*, *>?) {
+                            val imageUrl = resultData?.get("secure_url") as? String
+                            if (imageUrl != null) {
+                                updateProfilePictureUrl(imageUrl)
+                            } else {
+                                _uiState.update { it.copy(isUploading = false, errorMessage = "Failed to get image URL from Cloudinary.") }
+                                viewModelScope.launch { _snackbarMessage.emit("Failed to get image URL from Cloudinary.") }
+                            }
+                        }
+                        override fun onError(requestId: String, error: ErrorInfo?) {
+                            _uiState.update { it.copy(isUploading = false, errorMessage = error?.description ?: "Cloudinary upload failed.") }
+                            android.util.Log.e("CloudinaryUpload", "Upload error: ${error?.description}")
+                            viewModelScope.launch { _snackbarMessage.emit(error?.description ?: "Cloudinary upload failed.") }
+                        }
+                        override fun onReschedule(requestId: String, error: ErrorInfo?) {}
+                    })
+                    .dispatch()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isUploading = false, errorMessage = e.localizedMessage ?: "An unexpected error occurred.") }
+                _snackbarMessage.emit(e.localizedMessage ?: "An unexpected error occurred.")
+            }
+        }
+    }
+
+    private fun updateProfilePictureUrl(imageUrl: String) {
+        val user = authRepository.currentUser
+        if (user == null) {
+            _uiState.update { it.copy(isUploading = false, errorMessage = "User not logged in.") }
+            viewModelScope.launch { _snackbarMessage.emit("User not logged in.") }
+            return
+        }
+        val profileUpdates = UserProfileChangeRequest.Builder()
+            .setPhotoUri(imageUrl.toUri())
+            .build()
+        user.updateProfile(profileUpdates)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    user.reload().addOnCompleteListener {
+                        _uiState.update { it.copy(isUploading = false, uploadSuccess = true, profilePhotoUrl = imageUrl) }
+                        viewModelScope.launch { _snackbarMessage.emit("Profile picture updated successfully!") }
+                    }
+                } else {
+                    _uiState.update { it.copy(isUploading = false, errorMessage = task.exception?.localizedMessage ?: "Failed to update profile.") }
+                    viewModelScope.launch { _snackbarMessage.emit(task.exception?.localizedMessage ?: "Failed to update profile.") }
+                }
+            }
+    }
+
+    fun onChangePasswordClick() {
+        showChangePasswordDialog.value = true
+    }
+    fun onResetPasswordClick() {
+        showResetPasswordDialog.value = true
+    }
+    fun onDeleteAccountClick() {
+        showDeleteAccountDialog.value = true
+    }
+    fun dismissDialogs() {
+        showChangePasswordDialog.value = false
+        showResetPasswordDialog.value = false
+        showDeleteAccountDialog.value = false
+        changePasswordCurrent.value = ""
+        changePasswordNew.value = ""
+        deleteAccountPassword.value = ""
+    }
+
+    fun submitChangePassword() {
+        val currentEmail = authRepository.currentUser?.email ?: ""
+        val currentPassword = changePasswordCurrent.value
+        val newPassword = changePasswordNew.value
+        if (currentPassword.isBlank() || newPassword.isBlank()) {
+            viewModelScope.launch { _snackbarMessage.emit("Please fill all fields.") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val reauth = authRepository.reauthenticate(currentEmail, currentPassword)
+            if (reauth is com.m7md7sn.dentel.utils.Result.Error) {
+                _uiState.update { it.copy(isLoading = false) }
+                _snackbarMessage.emit(reauth.message ?: "Re-authentication failed.")
+                return@launch
+            }
+            val result = authRepository.updatePassword(newPassword)
+            _uiState.update { it.copy(isLoading = false) }
+            if (result is com.m7md7sn.dentel.utils.Result.Success) {
+                _snackbarMessage.emit("Password updated successfully.")
+                dismissDialogs()
+            } else {
+                _snackbarMessage.emit((result as com.m7md7sn.dentel.utils.Result.Error).message ?: "Failed to update password.")
+            }
+        }
+    }
+
+    fun submitResetPassword() {
+        val email = authRepository.currentUser?.email ?: ""
+        if (email.isBlank()) {
+            viewModelScope.launch { _snackbarMessage.emit("No email found for this account.") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val result = authRepository.sendPasswordResetEmail(email)
+            _uiState.update { it.copy(isLoading = false) }
+            if (result is com.m7md7sn.dentel.utils.Result.Success) {
+                _snackbarMessage.emit("Password reset email sent.")
+                dismissDialogs()
+            } else {
+                _snackbarMessage.emit((result as com.m7md7sn.dentel.utils.Result.Error).message ?: "Failed to send reset email.")
+            }
+        }
+    }
+
+    fun submitDeleteAccount() {
+        val currentEmail = authRepository.currentUser?.email ?: ""
+        val password = deleteAccountPassword.value
+        val userId = authRepository.currentUser?.uid
+        if (password.isBlank()) {
+            viewModelScope.launch { _snackbarMessage.emit("Please enter your password.") }
+            return
+        }
+        if (userId == null) {
+            viewModelScope.launch { _snackbarMessage.emit("User not logged in.") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            // Re-authenticate
+            val reauth = authRepository.reauthenticate(currentEmail, password)
+            if (reauth is com.m7md7sn.dentel.utils.Result.Error) {
+                _uiState.update { it.copy(isLoading = false) }
+                _snackbarMessage.emit(reauth.message ?: "Re-authentication failed.")
+                return@launch
+            }
+            // Delete user data from Firestore
+            try {
+                profileRepository.deleteUserProfileData(userId)
+            } catch (e: Exception) {
+                // Log or handle error, but continue
+            }
+            // Delete profile image from Cloudinary
+            try {
+                com.cloudinary.android.MediaManager.get().cloudinary.uploader().destroy("profile_pictures/$userId", mapOf("resource_type" to "image"))
+            } catch (e: Exception) {
+                // Log or handle error, but continue
+            }
+            // Delete Firebase user
+            val result = authRepository.deleteAccount()
+            _uiState.update { it.copy(isLoading = false) }
+            if (result is com.m7md7sn.dentel.utils.Result.Success) {
+                _snackbarMessage.emit("Account deleted successfully.")
+                _uiState.update { it.copy(isLoggedOut = true) }
+            } else {
+                _snackbarMessage.emit((result as com.m7md7sn.dentel.utils.Result.Error).message ?: "Failed to delete account.")
+            }
+            dismissDialogs()
         }
     }
 

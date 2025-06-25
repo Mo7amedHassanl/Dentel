@@ -24,6 +24,11 @@ interface ProfileRepository {
      * Get list of favorite items
      */
     fun getFavoriteItems(type: FavoriteType): Flow<List<FavoriteItem>>
+
+    /**
+     * Delete all user profile data from Firestore for a given userId
+     */
+    suspend fun deleteUserProfileData(userId: String)
 }
 
 /**
@@ -32,7 +37,8 @@ interface ProfileRepository {
 @Singleton
 class ProfileRepositoryImpl @Inject constructor(
     private val authRepository: AuthRepository,
-    private val favoritesRepository: FavoritesRepository
+    private val favoritesRepository: FavoritesRepository,
+    private val db: FirebaseFirestore
 ) : ProfileRepository {
 
     override fun getUserProfile(): Flow<User> = flow {
@@ -51,6 +57,14 @@ class ProfileRepositoryImpl @Inject constructor(
     override fun getFavoriteItems(type: FavoriteType): Flow<List<FavoriteItem>> = when (type) {
         FavoriteType.ARTICLE -> favoritesRepository.getFavoriteArticles()
         FavoriteType.VIDEO -> favoritesRepository.getFavoriteVideos()
+    }
+
+    override suspend fun deleteUserProfileData(userId: String) {
+        // Delete user document from 'users' collection
+        db.collection("users").document(userId).delete().await()
+        // Delete all favorites (articles and videos)
+        db.collection("favorites").document(userId).delete().await()
+        // Add more collections as needed
     }
 }
 

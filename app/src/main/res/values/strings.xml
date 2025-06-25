@@ -53,4 +53,13 @@
    <string name="logout">Logout</string>
     <string name="dont_have_notifications">You have no notifications</string>
     <string name="contact_developer">Contact Developer</string>
+    <string name="profile_information">Profile Information</string>
+    <string name="full_name">Full Name</string>
+    <string name="update_profile">Update Profile</string>
+    <string name="account_management">Account Management</string>
+    <string name="danger_zone">Danger Zone</string>
+    <string name="change_password">Change Password</string>
+    <string name="change_email_address">Change Email Address</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="delete_account">Delete Account</string>
 </resources>

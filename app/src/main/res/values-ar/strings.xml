@@ -52,6 +52,15 @@
     <string name="support">الدعم</string>
     <string name="logout">تسجيل الخروج</string>
     <string name="dont_have_notifications">لا يوجد لديك إشعارات</string>
-    <string name="contact_developer">Contact Developer</string>
+    <string name="contact_developer">التواصل مع المطور</string>
+    <string name="profile_information">معلومات الملف الشخصي</string>
+    <string name="full_name">الاسم الكامل</string>
+    <string name="update_profile">تحديث الملف الشخصي</string>
+    <string name="account_management">إدارة الحساب</string>
+    <string name="danger_zone">منطقة خطرة</string>
+    <string name="change_password">تغيير كلمة السر</string>
+    <string name="change_email_address">تغيير البريد الإلكتروني</string>
+    <string name="reset_password">إعادة تعيين كلمة السر</string>
+    <string name="delete_account">حذف الحساب</string>
 
 </resources>
