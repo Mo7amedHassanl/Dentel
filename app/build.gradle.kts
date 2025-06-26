@@ -80,6 +80,11 @@ dependencies {
 
     implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
 
+    // Markdown renderer for Compose
+    implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.35.0")
+//    implementation("com.mikepenz:multiplatform-markdown-renderer-coil3:0.35.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-coil2:0.35.0")
+
     testImplementation(libs.junit)
 
     androidTestImplementation(libs.androidx.junit)
