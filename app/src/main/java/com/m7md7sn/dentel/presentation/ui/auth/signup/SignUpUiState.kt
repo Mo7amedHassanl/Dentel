@@ -25,6 +25,9 @@ data class SignUpUiState(
     val isConfirmPasswordVisible: Boolean = false,
     val isLoading: Boolean = false,
 
+    // Authentication method
+    val isGoogleSignIn: Boolean = false,
+
     // Signup operation result
     val signupResult: Result<FirebaseUser>? = null
 )

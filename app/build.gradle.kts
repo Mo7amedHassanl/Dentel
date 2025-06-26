@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.google.firebase.auth)
     implementation(libs.firebase.storage)
     implementation(libs.firebase.firestore.ktx)
+    implementation("com.google.android.gms:play-services-auth:21.3.0") // Google Sign-In
 
     //Hilt
     implementation(libs.hilt.android)

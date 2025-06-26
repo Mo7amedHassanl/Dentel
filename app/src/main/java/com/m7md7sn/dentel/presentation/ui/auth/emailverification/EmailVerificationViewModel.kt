@@ -38,6 +38,11 @@ class EmailVerificationViewModel @Inject constructor(
     private val _snackbarMessage = MutableSharedFlow<Event<String>>()
     val snackbarMessage: SharedFlow<Event<String>> = _snackbarMessage.asSharedFlow()
 
+    // Automatically send verification email when ViewModel is created
+    init {
+        sendEmailVerification()
+    }
+
     /**
      * Sends email verification to current user's email address
      * Updates UI state with loading state and result

@@ -53,6 +53,8 @@ fun SignUpContent(
     onToggleConfirmPasswordVisibility: () -> Unit,
     isUsernameError: Boolean,
     usernameErrorMessage: String?,
+    onGoogleLoginClick: () -> Unit = {},
+    onFacebookLoginClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -108,7 +110,10 @@ fun SignUpContent(
                 isLoading = isLoading
             )
             Spacer(Modifier.height(28.dp))
-            SocialLoginButtons()
+            SocialLoginButtons(
+                onGoogleLoginClick = onGoogleLoginClick,
+                onFacebookLoginClick = onFacebookLoginClick
+            )
             Spacer(Modifier.height(22.dp))
             Text(
                 text = stringResource(R.string.have_account),

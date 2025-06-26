@@ -1,8 +1,15 @@
 package com.m7md7sn.dentel.data.repository
 
+import android.content.Context
+import android.content.Intent
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.GoogleAuthProvider
+import com.m7md7sn.dentel.R
 import com.m7md7sn.dentel.utils.Result
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -13,8 +20,17 @@ import kotlinx.coroutines.withContext
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val context: Context
 ) : AuthRepository {
+
+    private val googleSignInClient: GoogleSignInClient by lazy {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        GoogleSignIn.getClient(context, gso)
+    }
 
     override val currentUser: FirebaseUser?
         get() = firebaseAuth.currentUser
@@ -174,6 +190,27 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getGoogleSignInIntent(): Intent {
+        return googleSignInClient.signInIntent
+    }
+
+    override suspend fun signInWithGoogle(idToken: String): Result<FirebaseUser> = withContext(Dispatchers.IO) {
+        try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val authResult = firebaseAuth.signInWithCredential(credential).await()
+
+            authResult.user?.let {
+                Result.Success(it)
+            } ?: Result.Error("Google sign in failed: User is null")
+        } catch (e: Exception) {
+            val errorMessage = when (e) {
+                is FirebaseAuthException -> "Authentication failed: ${e.localizedMessage ?: "Unknown error"}"
+                else -> "Google sign in failed: ${e.localizedMessage ?: "Unknown error"}"
+            }
+            Result.Error(errorMessage, e)
+        }
+    }
+
     override suspend fun deleteAccount(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val user = firebaseAuth.currentUser
@@ -187,4 +224,4 @@ class AuthRepositoryImpl @Inject constructor(
             Result.Error(e.localizedMessage ?: "Failed to delete account.", e)
         }
     }
-} 
+}

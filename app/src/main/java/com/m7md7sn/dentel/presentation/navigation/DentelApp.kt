@@ -203,6 +203,11 @@ fun DentelApp() {
                     },
                     onNavigateToLogin = {
                         navController.navigate(Screen.Login.route)
+                    },
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.SignUp.route) { inclusive = true }
+                        }
                     }
                 )
             }

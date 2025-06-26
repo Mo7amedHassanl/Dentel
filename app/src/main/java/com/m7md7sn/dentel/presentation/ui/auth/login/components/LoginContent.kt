@@ -44,6 +44,8 @@ fun LoginContent(
     passwordErrorMessage: String?,
     isPasswordVisible: Boolean,
     onTogglePasswordVisibility: () -> Unit,
+    onGoogleLoginClick: () -> Unit = {},
+    onFacebookLoginClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -94,7 +96,10 @@ fun LoginContent(
                 isLoading = isLoading
             )
             Spacer(Modifier.height(28.dp))
-            SocialLoginButtons()
+            SocialLoginButtons(
+                onGoogleLoginClick = onGoogleLoginClick,
+                onFacebookLoginClick = onFacebookLoginClick
+            )
             Spacer(Modifier.height(22.dp))
             Text(
                 text = stringResource(R.string.have_no_account),

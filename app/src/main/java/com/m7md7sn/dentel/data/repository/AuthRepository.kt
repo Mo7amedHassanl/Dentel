@@ -1,5 +1,6 @@
 package com.m7md7sn.dentel.data.repository
 
+import android.content.Intent
 import com.google.firebase.auth.FirebaseUser
 import com.m7md7sn.dentel.utils.Result
 
@@ -17,4 +18,6 @@ interface AuthRepository {
     suspend fun updateEmail(newEmail: String): Result<Unit>
     suspend fun reauthenticate(currentEmail: String, currentPassword: String): Result<Unit>
     suspend fun deleteAccount(): Result<Unit>
-} 
+    fun getGoogleSignInIntent(): Intent
+    suspend fun signInWithGoogle(idToken: String): Result<FirebaseUser>
+}

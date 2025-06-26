@@ -1,5 +1,6 @@
 package com.m7md7sn.dentel.presentation.ui.auth.login
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.m7md7sn.dentel.data.repository.AuthRepository
@@ -81,6 +82,29 @@ class LoginViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = false, loginResult = result)
 
             // Show error message if login failed
+            if (result is Result.Error) {
+                _snackbarMessage.emit(Event(result.message))
+            }
+        }
+    }
+
+    /**
+     * Returns an intent that can be used to start Google sign-in
+     */
+    fun getGoogleSignInIntent(): Intent {
+        return authRepository.getGoogleSignInIntent()
+    }
+
+    /**
+     * Handles the result of Google sign-in process
+     * @param idToken The ID token from Google sign-in
+     */
+    fun signInWithGoogle(idToken: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true, loginResult = Result.Loading)
+        viewModelScope.launch {
+            val result = authRepository.signInWithGoogle(idToken)
+            _uiState.value = _uiState.value.copy(isLoading = false, loginResult = result)
+
             if (result is Result.Error) {
                 _snackbarMessage.emit(Event(result.message))
             }

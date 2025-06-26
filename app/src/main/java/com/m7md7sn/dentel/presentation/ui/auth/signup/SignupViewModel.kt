@@ -138,6 +138,33 @@ class SignupViewModel @Inject constructor(
     }
 
     /**
+     * Returns an intent that can be used to start Google sign-in
+     */
+    fun getGoogleSignInIntent(): android.content.Intent {
+        return authRepository.getGoogleSignInIntent()
+    }
+
+    /**
+     * Handles the result of Google sign-in process
+     * @param idToken The ID token from Google sign-in
+     */
+    fun signInWithGoogle(idToken: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true, signupResult = Result.Loading)
+        viewModelScope.launch {
+            val result = authRepository.signInWithGoogle(idToken)
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                signupResult = result,
+                isGoogleSignIn = true // Flag to indicate this is a Google sign-in
+            )
+
+            if (result is Result.Error) {
+                _snackbarMessage.emit(Event(result.message))
+            }
+        }
+    }
+
+    /**
      * Resets the signup result to null
      * Used after handling signup success or failure
      */
