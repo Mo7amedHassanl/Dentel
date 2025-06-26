@@ -106,8 +106,8 @@ Articles in the app support Markdown formatting, including:
 ## Acknowledgements
 
 - AI was used to generate some of the content and code snippets in this project, including:
- - Refactoring code for better readability and maintainability
- - Adding comments and documentation
- - Generating example data for testing purposes
- - Assisting with UI design suggestions
+  - Refactoring code for better readability and maintainability
+  - Adding comments and documentation
+  - Generating example data for testing purposes
+  - Assisting with UI design suggestions
 
